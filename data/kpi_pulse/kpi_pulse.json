@@ -1,0 +1,14 @@
+{
+  "generated_at": "2025-12-25T11:58:29.105749Z",
+  "accepted_events": 4,
+  "unique_house_count": 2,
+  "events_by_code": {
+    "EVT_DISC_DRONE_SCAN_CREATED": 2,
+    "EVT_VER_HOUSE_QUALIFIED": 1,
+    "EVT_VER_CONSENT_OTP_VERIFIED": 1
+  },
+  "house_state_counts": {
+    "SHADOW": 1,
+    "CLAIMED": 1
+  }
+}

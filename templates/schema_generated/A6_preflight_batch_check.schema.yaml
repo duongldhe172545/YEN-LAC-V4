@@ -1,0 +1,62 @@
+template_code: A6_preflight_batch_check
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: >
+  Preflight Batch Check (kiểm tra trước khi nạp) – bộ soi lỗi (linter) để fail-fast.
+  Mục tiêu: chặn rác trước khi ingest event, đồng thời tạo audit log cho quyết định ingest/quarantine/reject.
+primary_key: [batch_id]
+secondary_keys: [source_fileset_id, preflight_ts]
+pii_policy_vi: >
+  Không lưu PII trong template này. producer_actor_id là mã nội bộ (pseudonymous), không phải PII.
+ingest_policy:
+  canonical_ingest_columns:
+    - batch_id
+    - ssot_version
+    - preflight_ts
+    - producer_actor_id
+    - source_fileset_id
+    - preflight_result
+    - quarantine_action
+    - error_count
+    - warning_count
+    - checksum_manifest
+    - geo_unit_code
+    - templates_in_batch
+    - row_count_total
+    - duplicate_key_count
+    - missing_required_count
+    - enum_invalid_count
+    - out_of_range_count
+    - bbox_outside_count
+    - pii_detected_flag
+    - fail_reason_codes
+    - validator_version
+    - preflight_duration_sec
+    - quarantine_queue_id
+    - source_uri
+    - tool_output_uri
+    - notes_raw
+  drop_columns: [ops_raci_hint, ops_cost_hint_vnd]
+enums:
+  preflight_result: [PASS, FAIL]
+  quarantine_action: [INGEST, QUARANTINE, REJECT]
+  pii_detected_flag: [NO, YES]
+  fail_reason_codes:
+    - MISSING_REQUIRED
+    - DUPLICATE_KEY
+    - INVALID_DATETIME
+    - INVALID_GEO
+    - PII_DETECTED
+    - SCHEMA_MISMATCH
+    - ENUM_INVALID
+    - OUT_OF_RANGE
+    - FILE_MISSING
+    - HASH_MISMATCH
+    - UNKNOWN
+validation_rules_vi:
+  - batch_id/ssot_version/preflight_ts/producer_actor_id/source_fileset_id là bắt buộc.
+  - preflight_result phải nằm trong enum; quarantine_action phải nằm trong enum.
+  - Nếu pii_detected_flag=YES thì phải FAIL và quarantine_action ∈ {QUARANTINE, REJECT}.
+  - Nếu FAIL thì error_count > 0 và fail_reason_codes không rỗng.
+  - checksum_manifest theo dạng 'sha256:<...>' để đối soát.
+  - ops_* là cột chạy cơm, không ingest canonical.

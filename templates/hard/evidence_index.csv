@@ -1,0 +1,2 @@
+evidence_id,event_id,event_code,house_id,job_id,file_uri,file_hash,captured_ts,captured_by
+EVD_9012,EVTID_0009,EVT_TRX_HANDOVER_SIGNED,YLX01_H0001,JOB_0001,s3://.../handover.jpg,sha256:...,2025-12-28T16:20:00,ADGPRO_0012

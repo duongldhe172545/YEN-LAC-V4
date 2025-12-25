@@ -1,0 +1,2 @@
+gate_decision_id,event_id,event_code,house_id,decision,decision_reason,decided_by,decided_ts
+GATE_0001,EVTID_0009,EVT_TRX_HANDOVER_SIGNED,YLX01_H0001,PASS,EVIDENCE_QA_PASS,SYSTEM,2025-12-28T18:05:00

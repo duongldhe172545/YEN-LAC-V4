@@ -1,0 +1,5 @@
+actor_id,role_code,org_unit,name_ref,phone_ref,status,actor_subtype
+UST_0007,ust,YL_XA01,(PII_VAULT_REF),(PII_VAULT_REF),ACTIVE,
+FIELD_RUNNER_01,field_runner,YL_XA01,(PII_VAULT_REF),(PII_VAULT_REF),ACTIVE,
+ADGPRO_0012,adg_pro,YL_XA01,(PII_VAULT_REF),(PII_VAULT_REF),ACTIVE,solar
+DRONE_0001,drone,YL_XA01,,,ACTIVE,

@@ -1,0 +1,2 @@
+event_code,evidence_type,required,min_count,notes
+EVT_TRX_HANDOVER_SIGNED,PHOTO_SIGNED_HANDOVER,Y,1,No Evidence No Pay

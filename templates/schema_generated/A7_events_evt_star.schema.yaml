@@ -1,0 +1,59 @@
+template_code: A7_events_evt_star
+ssot_version: V5.0.2
+stage: INGEST
+description_vi: >
+  Event Template EVT_* (nhật ký sự kiện) – lõi append-only cho Pilot Yên Lạc.
+  Validate theo registry/events.yaml, dedupe bằng idempotency_key.
+primary_key: [idempotency_key]
+secondary_keys: [event_code, event_ts, house_id, job_id]
+pii_policy_vi: >
+  Không lưu PII (SĐT/CCCD/tên thật) trong event log. Nếu cần định danh thì dùng PII Vault sau Consent.
+ingest_policy:
+  canonical_ingest_columns:
+    - event_code
+    - event_ts
+    - house_id
+    - job_id
+    - actor_id
+    - role_code
+    - idempotency_key
+    - payload_json
+    - lead_id
+    - pilot_id
+    - product_code
+    - txn_id
+    - invoice_id
+    - payout_id
+    - reconcile_id
+    - vat_payment_id
+    - user_id
+    - commune_id
+    - source_batch_id
+    - source_row_id
+    - evidence_pack_uri
+    - confidence_override
+    - notes
+    - source_uri
+    - provider_event_ref
+  drop_columns: [ops_raci_hint, ops_cost_hint_vnd]
+enums:
+  role_code: ['COMMANDER', 'DATA_LEAD', 'FINANCE_CONTROLLER', 'FIELD_RUNNER', 'UST', 'EPC_ADG', 'ADG_PRO', 'ANC', 'CTV', 'CITIZEN_OWNER']
+validation_rules_vi:
+  - event_code, event_ts, actor_id, idempotency_key là bắt buộc.
+  - event_code phải là EVT_* có trong registry/events.yaml.
+  - event_ts phải là ISO 8601.
+  - Không chứa PII trong payload_json/notes.
+  - Các required_keys/payload_required/evidence_required sẽ được máy validate theo từng event_code (registry).
+golden_path_12:
+  - EVT_DISC_DRONE_SCAN_CREATED
+  - EVT_VER_HOUSE_QUALIFIED
+  - EVT_VER_CONSENT_OTP_VERIFIED
+  - EVT_TRX_SITE_SURVEY_STARTED
+  - EVT_TRX_SITE_SURVEY_COMPLETED
+  - EVT_TRX_CPQ_QUOTE_CREATED
+  - EVT_TRX_ORDER_SIGNED
+  - EVT_TRX_JOB_STARTED
+  - EVT_TRX_INSTALL_COMPLETED
+  - EVT_TRX_HANDOVER_SIGNED
+  - EVT_FIN_CASH_COLLECTED
+  - EVT_FIN_PAYOUT_SENT

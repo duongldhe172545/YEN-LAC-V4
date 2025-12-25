@@ -1,0 +1,2 @@
+actor_id,role_code,org_unit,name_ref,phone_ref,status,actor_subtype
+UST_0007,UST,YL_XA01,(PII_VAULT_REF),(PII_VAULT_REF),ACTIVE,

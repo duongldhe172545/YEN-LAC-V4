@@ -1,0 +1,31 @@
+template_code: A17
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Work order – kế hoạch và theo dõi thi công.
+primary_key:
+- work_order_id
+secondary_keys:
+- job_id
+- work_status
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - work_order_id
+  - job_id
+  - planned_start_ts
+  - planned_end_ts
+  - crew_actor_id
+  - work_status
+  - daily_cap_slot
+  - notes
+  drop_columns: []
+enums:
+  work_status:
+  - PLANNED
+  - ASSIGNED
+  - STARTED
+  - DONE
+  - CANCELLED
+validation_rules_vi:
+- work_order_id/job_id/planned_start_ts/work_status là bắt buộc.
+- Work order để tránh overbook năng lực (capacity).

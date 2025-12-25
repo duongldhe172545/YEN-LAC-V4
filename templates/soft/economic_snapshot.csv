@@ -1,0 +1,2 @@
+geo_unit_code,snapshot_date,income_band_distribution_json,payment_behavior_proxy,credit_access_proxy,seasonal_cash_months,notes_raw
+YL_XA01,2025-12-20,"{""<5m"":0.2,""5-10m"":0.5,"">10m"":0.3}",0.6,0.5,"3,9,12",

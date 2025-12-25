@@ -1,0 +1,30 @@
+template_code: TMP_DOR_LOG
+ssot_version: V5.0.2
+type: soft
+stage: POST-INGEST
+file_source_in_ssot: templates/soft/door_opening_log.csv
+keys:
+- house_id
+- cluster_id
+- touch_ts
+purpose_vi: Log DOR (Door Opening Rate = tỷ lệ mở cửa/tiếp nhận).
+examples: door_opened=1
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - house_id
+  - cluster_id
+  - touch_ts
+  - touched_by
+  - door_opened
+  - consent_requested
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

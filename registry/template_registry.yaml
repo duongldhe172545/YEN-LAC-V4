@@ -1,0 +1,283 @@
+schema_version: V5.0.2
+generated_at: '2025-12-25'
+principles:
+- registry-first (sổ chuẩn trước, code đọc sổ)
+- append-only (chỉ thêm, không sửa lịch sử)
+- event_code = EVT_* + idempotency_key (khóa chống ghi trùng)
+- provider-neutral (tách provider_raw.* và canonical.*)
+- 'consent/PII: không lưu PII khi chưa consent; Unconsented_PII_Risk là kill-switch'
+- 'gate: No Evidence + Bad Evidence No Pay'
+- 'canonical evidence metric: evidence_pass_rate'
+templates:
+- template_code: TMP_HOUSE_MASTER
+  type: hard
+  stage: PRE-INGEST
+  file: templates/hard/house_master.csv
+  keys:
+  - house_id
+  - geo_unit_code
+  purpose_vi: Danh bạ nhà chuẩn (khóa ghép cho mọi sự kiện).
+  examples: house_id=YLX01_H0001
+- template_code: TMP_ACTOR_MASTER
+  type: hard
+  stage: PRE-INGEST
+  file: templates/hard/actor_master.csv
+  keys:
+  - actor_id
+  - role_code
+  purpose_vi: Danh bạ tác nhân vận hành (UST/EPC_ADG/ADG_PRO/ANC/CTV/CITIZEN...).
+    Thêm actor_subtype (ví dụ KOL/KOC) để mở rộng mà không phá role_code.
+  examples: actor_id=UST_0007, role_code=UST
+- template_code: TMP_JOB_MASTER
+  type: hard
+  stage: PRE-INGEST
+  file: templates/hard/job_master.csv
+  keys:
+  - job_id
+  - house_id
+  purpose_vi: Phiếu việc (job) chuẩn để gắn House_ID → Ops → Payout. Không lưu PII;
+    chỉ dùng actor_id (mã nội bộ).
+  examples: JOB_0001 gắn house_id=YLX01_H0001; ust_actor_id=UST_0007; adg_actor_id=ADGPRO_0012
+  notes_vi: assigned_actor_id giữ để tương thích; ưu tiên dùng ust_actor_id/field_runner_actor_id/adg_actor_id.
+- template_code: TMP_PROVIDER_MAPPING
+  type: hard
+  stage: PRE-INGEST
+  file: templates/hard/provider_mapping.csv
+  keys:
+  - provider_name
+  - provider_field
+  - canonical_field
+  purpose_vi: Bản đồ chuyển provider_raw → canonical (trung tính nhà cung cấp).
+  examples: provider_field=vdcd_roof_area → canonical_field=roof_area_m2
+- template_code: TMP_PREFLIGHT_BATCH_CHECK
+  type: hard+soft
+  stage: PRE-INGEST
+  file: templates/hard/preflight_batch_check.csv
+  keys:
+  - batch_id
+  purpose_vi: Bộ soi lỗi trước khi nạp (trùng khóa, sai ngày, thiếu cột...).
+  examples: batch_id=BATCH_20251224_01
+- template_code: TMP_EVENT_GOLDEN_PATH
+  type: hard
+  stage: INGEST
+  file: templates/hard/events_golden_path.csv
+  keys:
+  - event_code
+  - idempotency_key
+  purpose_vi: Nhật ký sự kiện tuyến xương sống (EVT_*), append-only.
+  examples: EVT_TRX_SITE_SURVEY_COMPLETED
+- template_code: TMP_EVIDENCE_MANIFEST
+  type: hard
+  stage: PRE/INGEST
+  file: templates/hard/evidence_manifest.csv
+  keys:
+  - event_code
+  - evidence_type
+  purpose_vi: Checklist bằng chứng theo event (để gate quyết định trả tiền).
+  examples: event_code=EVT_TRX_HANDOVER_SIGNED
+- template_code: TMP_EVIDENCE_INDEX
+  type: hard
+  stage: INGEST
+  file: templates/hard/evidence_index.csv
+  keys:
+  - evidence_id
+  - event_id
+  purpose_vi: Index file bằng chứng (uri/hash) gắn vào event/job/house.
+  examples: evidence_id=EVD_9012
+- template_code: TMP_EVIDENCE_QA
+  type: hard
+  stage: POST-INGEST
+  file: templates/hard/evidence_qa.csv
+  keys:
+  - evidence_id
+  purpose_vi: Kết quả QA bằng chứng (PASS/FAIL) để tính evidence_pass_rate.
+  examples: qa_result=PASS
+- template_code: TMP_GATE_DECISION
+  type: hard
+  stage: POST-INGEST
+  file: templates/hard/gate_decision.csv
+  keys:
+  - gate_decision_id
+  - event_id
+  purpose_vi: Kết luận Gate PASS/FAIL (No Evidence + Bad Evidence No Pay).
+  examples: decision=PASS
+- template_code: TMP_PAYOUT_REQUEST
+  type: hard
+  stage: POST-INGEST
+  file: templates/hard/payout_request.csv
+  keys:
+  - payout_id
+  - gate_decision_id
+  purpose_vi: Yêu cầu chi trả (chỉ mở khi gate PASS và tiền về).
+  examples: payout_id=PO_0001
+- template_code: TMP_CORRECTION_EVENT
+  type: hard+soft
+  stage: POST-INGEST
+  file: templates/hard/correction_event.csv
+  keys:
+  - target_event_id
+  - fact_family
+  purpose_vi: Đính chính theo append-only (không sửa dòng cũ).
+  examples: fact_family=roof_geometry
+- template_code: TMP_INTEL_RADAR_SNAPSHOT
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/intel_radar_snapshot.csv
+  keys:
+  - geo_unit_code
+  - snapshot_date
+  purpose_vi: Radar tình báo TAM–SAM–SOM theo xã/cụm (có confidence_score).
+  examples: economic_power_proxy=0.62
+- template_code: TMP_GOV_STAKEHOLDER_MAP
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/gov_stakeholder_map.csv
+  keys:
+  - gov_contact_id
+  - geo_unit_code
+  purpose_vi: Bản đồ bên liên quan chính quyền. stance (thô) + stance_score (1–5)
+    để giảm chủ quan.
+  examples: stance=SUPPORT, stance_score=5, outcome_reason_code=POLITICAL
+- template_code: TMP_GOV_ENGAGEMENT_LOG
+  type: soft
+  stage: PRE/POST-INGEST
+  file: templates/soft/gov_engagement_log.csv
+  keys:
+  - meeting_id
+  - gov_contact_id
+  purpose_vi: Nhật ký làm việc với chính quyền (append-only). Thêm điểm số 1–5 + reason_code
+    để máy tổng hợp.
+  examples: outcome=OK
+- template_code: TMP_GOV_DELIVERABLES_TRACKER
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/gov_deliverables_tracker.csv
+  keys:
+  - deliverable_id
+  purpose_vi: Theo dõi GOV-NAT deliverables (tầng cao) theo Playbook.
+  examples: GOV-NAT-01
+- template_code: TMP_MESSAGING_REGISTRY
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/messaging_registry.csv
+  keys:
+  - message_id
+  - audience_type
+  purpose_vi: Kho thông điệp chuẩn (anti-rumor) + talking points.
+  examples: audience_type=CITIZEN
+- template_code: TMP_BROADCAST_PLAN_LOG
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/broadcast_plan_log.csv
+  keys:
+  - broadcast_id
+  purpose_vi: Kế hoạch + log phát loa/Zalo + bằng chứng phát.
+  examples: channel=ZALO_OA
+- template_code: TMP_AB_CLUSTER_DESIGN
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/ab_cluster_design.csv
+  keys:
+  - cluster_id
+  purpose_vi: Thiết kế cụm A/B (treatment/control) để đo legitimacy uplift.
+  examples: treatment_flag=1
+- template_code: TMP_DOR_LOG
+  type: soft
+  stage: POST-INGEST
+  file: templates/soft/door_opening_log.csv
+  keys:
+  - house_id
+  - cluster_id
+  - touch_ts
+  purpose_vi: Log DOR (Door Opening Rate = tỷ lệ mở cửa/tiếp nhận).
+  examples: door_opened=1
+- template_code: TMP_INFLUENCE_NODE_REGISTRY
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/influence_node_registry.csv
+  keys:
+  - influence_node_id
+  purpose_vi: Danh mục node ảnh hưởng (KOL/KOC/gatekeeper...). Nếu node trùng với
+    actor_master thì điền actor_id để tránh trùng dữ liệu.
+  examples: node_type=KOL
+- template_code: TMP_INFLUENCE_EDGES
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/influence_edges.csv
+  keys:
+  - from_id
+  - to_id
+  purpose_vi: Liên kết network (graph) giữa cụm nhà ↔ node ảnh hưởng. Bắt buộc khai
+    báo entity_type để máy dựng graph an toàn.
+  examples: edge_strength=0.8
+- template_code: TMP_ECONOMIC_SNAPSHOT
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/economic_snapshot.csv
+  keys:
+  - geo_unit_code
+  - snapshot_date
+  purpose_vi: Snapshot thu nhập/mùa tiền/proxy tài chính để dự báo cash/DSO.
+  examples: seasonal_cash_months=3,9,12
+- template_code: TMP_ENTERPRISE_CENSUS
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/enterprise_census.csv
+  keys:
+  - geo_unit_code
+  - snapshot_date
+  purpose_vi: Số DN/HKD, ngành nghề, quy mô (phục vụ TAM/SAM).
+  examples: num_household_business=1200
+- template_code: TMP_SEASONALITY_CALENDAR
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/seasonality_calendar.csv
+  keys:
+  - geo_unit_code
+  - period_start
+  - period_end
+  purpose_vi: Lịch mùa vụ/lễ hội/thi cử ảnh hưởng lead/ops/cash.
+  examples: constraint_type=HARVEST
+- template_code: TMP_INCIDENT_RUMOR_LOG
+  type: soft
+  stage: PRE/POST-INGEST
+  file: templates/soft/incident_rumor_log.csv
+  keys:
+  - incident_id
+  purpose_vi: Log sự cố/tin đồn theo SOP-SOS (mục tiêu CIR=0).
+  examples: severity=HIGH
+- template_code: TMP_CAPACITY_CAP_PLAN
+  type: soft
+  stage: PRE-INGEST
+  file: templates/soft/capacity_cap_plan.csv
+  keys:
+  - cap_id
+  - geo_unit_code
+  purpose_vi: Giới hạn năng lực ngày (cap) để không cháy.
+  examples: daily_cap=10
+- template_code: TMP_RAIN_CHECK_BACKLOG
+  type: soft
+  stage: POST-INGEST
+  file: templates/soft/rain_check_backlog.csv
+  keys:
+  - rain_check_id
+  - house_id
+  purpose_vi: Danh sách phiếu hẹn khi quá tải (giữ niềm tin).
+  examples: promised_date=2025-12-28
+- template_code: TMP_DATA_OUTPUT_DELIVERY_LOG
+  type: soft
+  stage: POST-INGEST
+  file: templates/soft/data_output_delivery_log.csv
+  keys:
+  - delivery_id
+  - geo_unit_code
+  purpose_vi: Log bàn giao đầu ra cho xã (dashboard/GeoJSON/API) và nghiệm thu.
+  examples: acceptance_status=SIGNED
+glossary_vi:
+  registry-first: ưu tiên sổ chuẩn (registry) trước, phần mềm đọc theo sổ
+  append-only: chỉ ghi thêm, không sửa lịch sử
+  idempotency_key: khóa chống ghi trùng
+  provider-neutral: trung tính nhà cung cấp, không phụ thuộc định dạng đầu vào
+  PII: thông tin định danh cá nhân (SĐT/CCCD...)
+  gate: cổng kiểm soát trả tiền theo bằng chứng
+  DOR: tỷ lệ mở cửa/tiếp nhận (Door Opening Rate)

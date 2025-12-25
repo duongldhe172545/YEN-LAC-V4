@@ -1,0 +1,2 @@
+event_code,event_ts,house_id,job_id,actor_id,idempotency_key,payload_json
+EVT_TRX_SITE_SURVEY_COMPLETED,2025-12-24T09:10:00,YLX01_H0001,JOB_0001,UST_0007,YLX01_H0001|20251224|SURVEY,"{""roof_area_m2"":100,""roof_type"":""TON""}"

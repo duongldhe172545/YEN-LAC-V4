@@ -1,0 +1,2 @@
+house_id,cluster_id,touch_ts,touched_by,door_opened,consent_requested,notes_raw
+YLX01_H0001,CL_01,2025-12-24T10:10:00,UST_0007,1,1,Owner receptive

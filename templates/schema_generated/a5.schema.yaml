@@ -1,0 +1,34 @@
+template_code: A5
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Provider mapping – chống vendor lock-in.
+primary_key:
+- provider_id
+- provider_version
+- source_template_code
+- provider_field_name
+secondary_keys:
+- canonical_field_name
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - provider_id
+  - provider_version
+  - source_template_code
+  - provider_field_name
+  - canonical_field_name
+  - transform_rule
+  - unit
+  - required_flag
+  - notes
+  - source_uri
+  drop_columns:
+  - ops_raci_hint
+enums:
+  required_flag:
+  - 'YES'
+  - 'NO'
+validation_rules_vi:
+- provider_id/provider_version/source_template_code/provider_field_name/canonical_field_name
+  là bắt buộc.
+- Không dùng vdcd_* trong canonical_field_name (provider-neutral).

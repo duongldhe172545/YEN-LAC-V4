@@ -1,0 +1,74 @@
+schema_version: V5.0.2
+generated_at: '2025-12-25'
+dimensions:
+- dim_code: DIM_STANCE
+  values:
+  - SUPPORT
+  - NEUTRAL
+  - BLOCK
+  vi: Thái độ/độ ủng hộ
+- dim_code: DIM_SENTIMENT
+  values:
+  - POS
+  - NEU
+  - NEG
+  vi: Cảm xúc/đánh giá
+- dim_code: DIM_CHANNEL
+  values:
+  - OFFLINE
+  - ZALO_OA
+  - ZALO_GROUP
+  - FB_PAGE
+  - FB_GROUP
+  - LOUDSPEAKER
+  vi: Kênh truyền thông
+- dim_code: DIM_CONSTRAINT_TYPE
+  values:
+  - HARVEST
+  - FESTIVAL
+  - EXAM
+  - MARKET_DAY
+  - WEDDING_SEASON
+  - WEATHER_RISK
+  vi: Loại ràng buộc lịch địa phương
+- dim_code: DIM_SEVERITY
+  values:
+  - LOW
+  - MED
+  - HIGH
+  - CRITICAL
+  vi: Mức độ nghiêm trọng
+- dim_code: DIM_NODE_TYPE
+  values:
+  - KOL
+  - KOC
+  - GATEKEEPER
+  - ANTI_FAN
+  - ELDER
+  - TEACHER
+  - BUSINESS_OWNER
+  vi: Loại node ảnh hưởng
+- dim_code: DIM_OUTCOME_REASON_CODE
+  values:
+  - POLITICAL
+  - TECHNICAL
+  - LACK_BUDGET
+  - COMPLIANCE
+  - OTHER
+  vi: Mã lý do kết quả/đánh giá (chuẩn hóa để máy tổng hợp)
+- dim_code: DIM_OUTCOME
+  values:
+  - OK
+  - PENDING
+  - RESIST
+  vi: Kết quả cuộc họp/làm việc (mức thô)
+- dim_code: DIM_ENTITY_TYPE
+  values:
+  - HOUSE_ID
+  - HOUSE_CLUSTER
+  - ACTOR_ID
+  - INFLUENCE_NODE
+  - GOV_CONTACT
+  - GEO_UNIT
+  vi: Loại thực thể (để graph/edge không loạn)
+notes: Các dimension này dùng cho template mềm (intel) để nhập thống nhất, tránh freestyle.

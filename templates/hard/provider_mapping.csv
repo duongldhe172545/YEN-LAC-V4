@@ -1,0 +1,2 @@
+provider_name,provider_field,canonical_field,transform_rule,unit,notes_raw
+VDCD,vdcd_roof_area,roof_area_m2,to_float,m2,vendor field mapping

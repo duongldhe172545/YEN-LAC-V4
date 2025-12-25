@@ -1,0 +1,28 @@
+template_code: TMP_GOV_DELIVERABLES_TRACKER
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/gov_deliverables_tracker.csv
+keys:
+- deliverable_id
+purpose_vi: Theo dõi GOV-NAT deliverables (tầng cao) theo Playbook.
+examples: GOV-NAT-01
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - deliverable_id
+  - deliverable_name
+  - owner
+  - status
+  - due_date
+  - evidence_uri
+  - notes
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

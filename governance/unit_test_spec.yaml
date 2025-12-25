@@ -1,0 +1,28 @@
+meta:
+  spec: Unit_Test_Spec
+  version: v5.0.2
+  patch_id: P1-UNITTEST-SPEC
+  build_date: '2025-12-24'
+  owners:
+    primary: Data Engineer
+    secondary: QA Lead
+  min_coverage_pct: 90
+  review_required: true
+  must_cover:
+    - boundary_null_values  # xử lý thiếu dữ liệu
+    - boundary_zero         # chia cho 0, count=0
+    - extreme_high_values   # outliers
+
+examples:
+  - metric_code: close_rate
+    description: tỷ_lệ_chốt (close_count/lead_count)
+    test_cases:
+      - input: {lead_count: 0, close_count: 0}
+        expected: 0
+        tags: [boundary_zero]
+      - input: {lead_count: null, close_count: 1}
+        expected: 0
+        tags: [boundary_null_values]
+      - input: {lead_count: 1000000, close_count: 900000}
+        expected: 0.9
+        tags: [extreme_high_values]

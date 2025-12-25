@@ -1,0 +1,26 @@
+template_code: A18
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Handover/Warranty – chốt bàn giao, mở vòng đời hậu mãi.
+primary_key:
+- handover_id
+secondary_keys:
+- house_id
+- job_id
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - handover_id
+  - handover_ts
+  - house_id
+  - job_id
+  - warranty_start_ts
+  - warranty_months
+  - warranty_lookup_code
+  - handover_evidence_uri
+  - notes
+  drop_columns: []
+enums: {}
+validation_rules_vi:
+- handover_id/handover_ts/house_id là bắt buộc.
+- Bàn giao + bảo hành là điều kiện để tiến tới GOLDEN readiness.

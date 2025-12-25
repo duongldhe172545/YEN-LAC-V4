@@ -1,0 +1,2 @@
+batch_id,file_name,check_code,check_result,details,checked_by,checked_ts
+BATCH_20251224_01,Excel_Master_GD1.xlsx,DUPLICATE_ID,PASS,,FIELD_RUNNER_01,2025-12-24T18:00:00

@@ -1,0 +1,30 @@
+template_code: A16
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Cash receipt – tiền về, trigger payout.
+primary_key:
+- payment_id
+secondary_keys:
+- order_id
+- payment_method
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - payment_id
+  - order_id
+  - cash_ts
+  - amount_vnd
+  - payment_method
+  - bank_ref_hash
+  - receipt_evidence_uri
+  - notes
+  drop_columns: []
+enums:
+  payment_method:
+  - BANK_TRANSFER
+  - CASH
+  - EWALLET
+  - OTHER
+validation_rules_vi:
+- payment_id/order_id/cash_ts/amount_vnd/payment_method là bắt buộc.
+- Không lưu số TK thật; dùng bank_ref_hash.

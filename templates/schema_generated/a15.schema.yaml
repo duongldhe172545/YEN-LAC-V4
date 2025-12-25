@@ -1,0 +1,29 @@
+template_code: A15
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Order/Contract – nối quote sang thu tiền và ops.
+primary_key:
+- order_id
+secondary_keys:
+- quote_id
+- contract_status
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - order_id
+  - order_ts
+  - quote_id
+  - contract_signed_ts
+  - contract_status
+  - contract_ref_hash
+  - terms_version
+  - notes
+  drop_columns: []
+enums:
+  contract_status:
+  - DRAFT
+  - SIGNED
+  - CANCELLED
+validation_rules_vi:
+- order_id/order_ts/quote_id/contract_status là bắt buộc.
+- Không lưu PII; giấy tờ thật → PII Vault + consent.

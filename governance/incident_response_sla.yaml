@@ -1,0 +1,26 @@
+meta:
+  spec: Incident_Response_SLA
+  version: v5.0.2
+  patch_id: P1-INCIDENT-SLA
+  build_date: '2025-12-24'
+
+Tier_1_Warning:
+  response_time: "15 phút"
+  action_time: "1h"
+  owner: "Ops Lead"
+  backup_owner: "Deputy Head of Risk"
+  escalation: "N/A"
+
+Tier_2_Throttle:
+  response_time: "5 phút"
+  action_time: "30 phút"
+  owner: "Finance Controller"
+  backup_owner: "CFO"
+  escalation: "CEO nếu >2h chưa resolve"
+
+Tier_3_Hard_Stop:
+  response_time: "2 phút"
+  action_time: "15 phút"
+  owner: "Commander"
+  backup_owner: "CEO"
+  escalation: "HĐQT nếu >1h chưa mở lại"

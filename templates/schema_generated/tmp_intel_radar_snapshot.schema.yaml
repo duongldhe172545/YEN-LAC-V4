@@ -1,0 +1,32 @@
+template_code: TMP_INTEL_RADAR_SNAPSHOT
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/intel_radar_snapshot.csv
+keys:
+- geo_unit_code
+- snapshot_date
+purpose_vi: Radar tình báo TAM–SAM–SOM theo xã/cụm (có confidence_score).
+examples: economic_power_proxy=0.62
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - geo_unit_code
+  - snapshot_date
+  - tam_norm_proxy
+  - economic_power_proxy
+  - digital_readiness_proxy
+  - s2b_capability_proxy
+  - political_support_proxy
+  - seasonality_risk_proxy
+  - confidence_score
+  - source_refs
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

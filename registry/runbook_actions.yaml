@@ -1,0 +1,34 @@
+# runbook_actions V5.0.2 2025-12-24
+kill_switch_tiers:
+  - tier: 1
+    name: Warning
+    response_time_minutes: 15
+    action_time_minutes: 60
+    default_owner_role: FIELD_RUNNER
+    backup_owner_role: DEPUTY_RISK
+    actions:
+      - notify: ["war_room_channel", "ops_channel"]
+      - open_incident: true
+      - require_root_cause_note: true
+  - tier: 2
+    name: Throttle
+    response_time_minutes: 5
+    action_time_minutes: 30
+    default_owner_role: OPS_LEAD
+    backup_owner_role: CFO
+    actions:
+      - throttle_new_jobs: true
+      - throttle_payout: "conditional"
+      - quarantine_scope: ["job", "house"]
+      - require_executive_update_minutes: 120
+  - tier: 3
+    name: Hard_Stop
+    response_time_minutes: 2
+    action_time_minutes: 15
+    default_owner_role: COMMANDER
+    backup_owner_role: CEO
+    actions:
+      - stop_new_jobs: true
+      - freeze_payout: true
+      - activate_data_privacy_protocol: true
+      - require_board_update_minutes: 60

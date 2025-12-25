@@ -1,0 +1,29 @@
+template_code: A11
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Evidence QA – chấm đạt/không đạt.
+primary_key:
+- qa_id
+secondary_keys:
+- evidence_id
+- qa_result
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - qa_id
+  - evidence_id
+  - qa_ts
+  - qa_actor_id
+  - qa_result
+  - fail_reason_codes
+  - notes
+  - source_batch_id
+  drop_columns: []
+enums:
+  qa_result:
+  - PASS
+  - FAIL
+validation_rules_vi:
+- qa_id/evidence_id/qa_ts/qa_actor_id/qa_result là bắt buộc.
+- Nếu qa_result=FAIL thì fail_reason_codes không được rỗng.
+- QA là đầu vào cho evidence_pass_rate (tỷ lệ bằng chứng đạt).

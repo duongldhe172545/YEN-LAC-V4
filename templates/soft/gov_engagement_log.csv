@@ -1,0 +1,2 @@
+meeting_id,gov_contact_id,meeting_ts,topic,outcome,meeting_outcome_score,outcome_reason_code,commitment_next_step,evidence_uri,held_by,notes_raw
+MTG_1203,GOV_YL_XA01_UBND_01,2025-12-21T09:00:00,Messaging approval,OK,5,POLITICAL,Approve loudspeaker script,drive://.../mom.jpg,FIELD_RUNNER_01,

@@ -1,0 +1,40 @@
+template_code: A10
+ssot_version: V5.0.2
+stage: INGEST
+description_vi: Evidence index – nối file bằng chứng vào event.
+primary_key:
+- evidence_id
+secondary_keys:
+- linked_idempotency_key
+- evidence_type
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - evidence_id
+  - linked_idempotency_key
+  - evidence_type
+  - file_uri
+  - sha256
+  - capture_ts
+  - capture_lat
+  - capture_lng
+  - device_id_hash
+  - mime_type
+  - size_bytes
+  - source_batch_id
+  - notes
+  - source_uri
+  drop_columns: []
+enums:
+  evidence_type:
+  - PHOTO
+  - VIDEO
+  - GPS_TRACE
+  - FORM
+  - SIGNATURE
+  - AUDIO
+  - DOC
+  - OTHER
+validation_rules_vi:
+- evidence_id/linked_idempotency_key/evidence_type/file_uri là bắt buộc.
+- sha256 và device_id_hash nên có để chống sửa file.

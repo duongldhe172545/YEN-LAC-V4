@@ -1,0 +1,41 @@
+template_code: A4
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Product Master – danh mục sản phẩm cho CPQ/PnL.
+primary_key:
+- product_code
+secondary_keys:
+- product_line
+- active_flag
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - product_code
+  - product_line
+  - product_name_vi
+  - unit
+  - list_price_vnd
+  - base_cost_vnd
+  - warranty_months
+  - financing_supported
+  - active_flag
+  - notes
+  - source_uri
+  - provider_product_ref
+  drop_columns:
+  - ops_raci_hint
+enums:
+  unit:
+  - SET
+  - KW
+  - M2
+  - OTHER
+  financing_supported:
+  - 'YES'
+  - 'NO'
+  active_flag:
+  - 'YES'
+  - 'NO'
+validation_rules_vi:
+- product_code/product_line/product_name_vi/unit/active_flag là bắt buộc.
+- Giá và chi phí phải >= 0 nếu có.

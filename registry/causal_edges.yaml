@@ -1,0 +1,160 @@
+spec:
+  name: causal_edges_k0_k8_yenlac
+  version: v1.2
+  date: '2025-12-24'
+  notes: Merged edges from existing registry + A1 locked edges; canonical metric_code;
+    append-only.
+edges:
+- edge_id: E001
+  from: METRIC:unconsented_pii_risk
+  to: METRIC:sys_kill_switch_status
+  sign: 1
+  lag_days: 0
+  weight: 1.0
+  explain_vi: Giữ PII chưa consent quá 48h => bật cầu dao (kill-switch).
+  status: LOCKED
+  source: Patch PARAM MASTER V4.1 + nguyên tắc consent
+- edge_id: E002
+  from: METRIC:ops_manual_entry_flag
+  to: METRIC:data_fraud_rate
+  sign: 1
+  lag_days: 3
+  weight: 0.7
+  explain_vi: Nhập tay/fallback nhiều => tăng nhầm/gian lận.
+  status: LOCKED
+  source: Checklist Gate Hardening (manual fallback)
+- edge_id: E003
+  from: METRIC:data_fraud_rate
+  to: METRIC:evidence_pass_rate
+  sign: -1
+  lag_days: 3
+  weight: 0.6
+  explain_vi: Gian lận tăng => tỷ lệ bằng chứng đạt giảm.
+  status: INFERRED
+  source: Suy luận (risk logic)
+- edge_id: E004
+  from: METRIC:vam_payout_latency_hours
+  to: METRIC:ust_on_duty_rate
+  sign: -1
+  lag_days: 7
+  weight: 0.6
+  explain_vi: Trả thưởng chậm => lực lượng nguội, ít hoạt động.
+  status: INFERRED
+  source: Suy luận (network health)
+- edge_id: E005
+  from: METRIC:fin_dso_days
+  to: METRIC:fin_runway_days
+  sign: -1
+  lag_days: 30
+  weight: 0.6
+  explain_vi: Thu tiền chậm => runway giảm => phải giảm nhịp ra quân.
+  status: INFERRED
+  source: Suy luận (cashflow)
+- edge_id: E101
+  from: METRIC:vdcd_pack_completion_rate
+  to: METRIC:sla_survey_to_quote_hours
+  sign: -1
+  lag_days: 7
+  weight: 0.4
+  explain_vi: Có đủ gói dữ liệu VDCD => ra báo giá nhanh hơn (ít khảo sát lại).
+  status: INFERRED
+  source: Suy luận (data->ops)
+- edge_id: E102
+  from: METRIC:vdcd_qa_pass_rate
+  to: METRIC:first_time_right_rate
+  sign: 1
+  lag_days: 7
+  weight: 0.3
+  explain_vi: Dữ liệu chuẩn hơn => làm đúng ngay lần đầu tăng.
+  status: INFERRED
+  source: Suy luận (data quality)
+- edge_id: E201
+  from: METRIC:hr_roster_fill_rate
+  to: METRIC:ops_sla_ontime_rate
+  sign: 1
+  lag_days: 3
+  weight: 0.5
+  explain_vi: Đủ người => on-time tốt hơn.
+  status: INFERRED
+  source: Suy luận (capacity)
+- edge_id: E202
+  from: METRIC:hr_capacity_utilization_rate
+  to: METRIC:rework_rate
+  sign: 1
+  lag_days: 7
+  weight: 0.4
+  explain_vi: Quá tải => làm ẩu => rework tăng.
+  status: INFERRED
+  source: Suy luận (capacity->quality)
+- edge_id: E301
+  from: PARAM:os_pct_default
+  to: METRIC:fin_burn_rate_monthly_vnd
+  sign: 1
+  lag_days: 30
+  weight: 0.7
+  explain_vi: OS% cao => burn tăng.
+  status: LOCKED
+  source: Chốt OS%=2% pilot
+- edge_id: E302
+  from: METRIC:fin_runway_days
+  to: PARAM:marketing_intensity
+  sign: -1
+  lag_days: 30
+  weight: 0.5
+  explain_vi: Runway thấp => giảm cường độ marketing.
+  status: INFERRED
+  source: Suy luận (finance->inputs)
+- edge_id: E303
+  from: PARAM:marketing_intensity
+  to: METRIC:lead_created_count
+  sign: 1
+  lag_days: 7
+  weight: 0.6
+  explain_vi: Marketing mạnh => lead tăng.
+  status: INFERRED
+  source: Suy luận (inputs->lead)
+- edge_id: E040
+  from: METRIC:vam_payout_latency_hours
+  to: METRIC:anc_active_nodes
+  sign: -1
+  lag_days: 7
+  weight: 0.85
+  explain_vi: Trả thưởng chậm, người đem lead bỏ, lead tụt.
+  status: LOCKED
+  source: A1 v1.1 Locked edges (đã chốt Commander)
+- edge_id: E042
+  from: METRIC:fin_dso_days
+  to: METRIC:adgpro_active_count
+  sign: -1
+  lag_days: 14
+  weight: 0.5
+  explain_vi: Tiền về chậm, thợ ưu tiên job ngoài.
+  status: LOCKED
+  source: A1 v1.1 Locked edges (đã chốt Commander)
+- edge_id: E021
+  from: METRIC:rework_rate
+  to: METRIC:fin_dso_days
+  sign: 1
+  lag_days: 7
+  weight: 0.6
+  explain_vi: Làm lại nhiều, nghiệm thu chậm, tiền về chậm.
+  status: LOCKED
+  source: A1 v1.1 Locked edges (đã chốt Commander)
+- edge_id: E022
+  from: METRIC:sla_lead_to_survey_hours
+  to: METRIC:cr_qualified_to_survey_rate
+  sign: -1
+  lag_days: 7
+  weight: 0.5
+  explain_vi: Khảo sát chậm, khách nguội, rơi lead.
+  status: LOCKED
+  source: A1 v1.1 Locked edges (đã chốt Commander)
+- edge_id: E050
+  from: METRIC:ust_dau_rate
+  to: METRIC:ops_manual_entry_flag
+  sign: -1
+  lag_days: 3
+  weight: 0.6
+  explain_vi: UST dùng app nhiều thì ít nhập tay, dữ liệu sạch hơn.
+  status: LOCKED
+  source: A1 v1.1 Locked edges (đã chốt Commander)

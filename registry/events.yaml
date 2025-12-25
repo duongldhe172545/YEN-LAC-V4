@@ -1,0 +1,1774 @@
+spec:
+  name: D2Com Yen Lac Pilot - Event Taxonomy
+  version: v1.7
+  generated_at: '2025-12-24T09:00:00'
+  principles_vi:
+  - 'Event Sourcing (Nguồn sự kiện): mọi việc xảy ra đều ghi thành event; không sửa
+    event, chỉ ghi thêm (append-only).'
+  - 'Traceability (Truy vết): KPI phải drill-down được về house_id và event_log_id.'
+  - 'No Evidence – No Pay (Không bằng chứng – Không trả thưởng): event liên quan tiền
+    bắt buộc có evidence.'
+  - 'Confidence (Độ tin cậy): event có default_confidence; dữ liệu confidence thấp
+    không được ghi đè ''best fact'' confidence cao.'
+  canonical_states:
+    house_lifecycle:
+    - SHADOW
+    - QUALIFIED
+    - CLAIMED
+    - FINANCIAL
+    - GOLDEN
+    job_pipeline:
+    - lead
+    - survey
+    - quote
+    - close
+    - install
+    - handover
+    - cash
+  roles:
+  - role_code: commander
+    vi: Chỉ huy (HO)
+  - role_code: data_lead
+    vi: Data Lead (HO)
+  - role_code: finance_controller
+    vi: Finance Controller (HO)
+  - role_code: field_runner
+    vi: Field Runner (OS)
+  - role_code: ust
+    vi: UST - đại diện thương mại xã
+  - role_code: adg_pro
+    vi: ADG Pro - đội/xưởng thợ địa phương
+  - role_code: epc_adg
+    vi: EPC ADG - lực lượng tập đoàn pha đầu
+  - role_code: ctv
+    vi: CTV - cộng tác viên
+  - role_code: citizen
+    vi: Dân/Chủ nhà
+  - role_code: drone
+    vi: Drone/UAV - bay quét
+  - role_code: system
+    vi: Hệ thống (tự sinh event)
+  evidence_catalog:
+    basic:
+    - evidence_code: EV_TIME
+      vi: Dấu thời gian (event_at + ingested_at)
+    - evidence_code: EV_ACTOR
+      vi: Định danh người làm (actor_id + role)
+    - evidence_code: EV_GEO
+      vi: Tọa độ (geo_point) + geofence_match
+    - evidence_code: EV_PHOTO_EXIF
+      vi: Ảnh có EXIF gốc + hash ảnh
+    - evidence_code: EV_LINK
+      vi: Gắn đúng khóa (house_id/lead_id/job_id)
+    consent:
+    - evidence_code: EV_CONSENT_OTP
+      vi: OTP/ConsentID + version mẫu consent + timestamp
+    transaction:
+    - evidence_code: EV_DOC_SIGN
+      vi: Biên bản/Chữ ký số hoặc ký tay chụp lại
+    - evidence_code: EV_BEFORE_AFTER
+      vi: Ảnh trước-sau thi công + EXIF + geo
+    - evidence_code: EV_QA_CHECKLIST
+      vi: Checklist QA + người duyệt
+    financial:
+    - evidence_code: EV_TXN_PROOF
+      vi: Chứng từ/mã giao dịch (bank/cash)
+    - evidence_code: EV_RECONCILE
+      vi: Đối soát ledger (reconcile_id)
+  confidence_rules:
+  - rule_code: BEST_FACT_WINS
+    vi: Trong cùng một 'fact_family' (nhóm sự thật), record có confidence cao nhất
+      là best_fact; record confidence thấp vẫn lưu để audit nhưng không ghi đè best_fact.
+  notes_vi:
+  - Bổ sung gói Tủ bếp (KITCHEN) dùng split % tương tự Solar; split rule chọn theo
+    product_code khi CASH_COLLECTED.
+  - Bổ sung trường VAT (thuế GTGT) để tách doanh thu thuần (không VAT) khỏi phần thuế
+    phải nộp.
+  - 'Cập nhật VAT theo 2 mức: hàng hóa (10%) và dịch vụ lắp đặt (8%). Tách VAT theo
+    line item dựa trên install_pct của doanh thu thuần (ex-VAT).'
+  - 'PATCH 1.4: Bổ sung VDCD Data Pack events (tạo gói 2D/3D/GeoJSON/API + QA).'
+  - 'PATCH 1.4: Bổ sung Finance Investment events (Budget/Capex/Opex) và HR roster/capacity
+    events.'
+  - 'PATCH 1.5: Thêm event canonical cho Survey Started + Rework Opened; thêm alias
+    map cho các mã event legacy trong formula/spec.'
+  aliases:
+    EVT_LEAD_QUALIFIED: EVT_VER_HOUSE_QUALIFIED
+    EVT_OPS_SURVEY_STARTED: EVT_TRX_SITE_SURVEY_STARTED
+    EVT_OPS_SURVEY_COMPLETED: EVT_TRX_SITE_SURVEY_COMPLETED
+    EVT_OPS_JOB_COMPLETED: EVT_TRX_HANDOVER_SIGNED
+    EVT_OPS_REWORK_OPENED: EVT_OPS_REWORK_OPENED
+  date: '2025-12-24'
+  notes: ' | PATCH: uppercase lifecycle states; add Age/NewBuild events. | PATCH P0.2:
+    canonical house_lifecycle states UPPERCASE.'
+events:
+- event_code: EVT_DISC_DRONE_SCAN_CREATED
+  name_vi: Drone tạo bản quét mái/nhà
+  category: discovery
+  actor_roles:
+  - drone
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - &id001
+    field: geo_point_wgs84
+    type: object{lat:float,lon:float}
+    required: true
+  - &id002
+    field: geofence_match_flag
+    type: bool
+    required: false
+  - &id003
+    field: distance_meters
+    type: float
+    required: false
+  - &id004
+    field: cluster_id
+    type: string
+    required: false
+  - field: roof_polygon_geojson
+    type: geojson
+    required: false
+  - field: roof_area_m2
+    type: float
+    required: false
+  - field: imagery_uri
+    type: string/uri
+    required: true
+  - field: source_batch_id
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_PHOTO_EXIF
+  - EV_LINK
+  default_confidence: 0.8
+  fact_family:
+  - roof_geometry
+  - house_location
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: SHADOW
+  monetary_impact: false
+  idempotency_key_fields:
+  - source_batch_id
+  - house_id
+- event_code: EVT_DISC_LEGACY_IMPORT_CREATED
+  name_vi: Import dữ liệu cũ (legacy) vào House_ID
+  category: discovery
+  actor_roles:
+  - system
+  - data_lead
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: legacy_source
+    type: string
+    required: true
+  - field: legacy_record_id
+    type: string
+    required: true
+  - field: fields_imported_json
+    type: json
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.5
+  fact_family:
+  - house_profile
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: SHADOW
+  monetary_impact: false
+  idempotency_key_fields:
+  - legacy_source
+  - legacy_record_id
+- event_code: EVT_DISC_CLUSTER_ASSIGNED
+  name_vi: Gán nhà vào cụm địa lý (cluster) để mô phỏng lan truyền
+  category: discovery
+  actor_roles:
+  - system
+  - data_lead
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: cluster_id
+    type: string
+    required: true
+  - field: cluster_method
+    type: string
+    required: true
+  - field: neighbor_radius_m
+    type: float
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.9
+  fact_family:
+  - spatial_cluster
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - cluster_id
+  - house_id
+  - cluster_method
+- event_code: EVT_ENG_UST_CHECKIN
+  name_vi: UST check-in tại nhà (tiếp cận)
+  category: engagement
+  actor_roles:
+  - ust
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - field: checkin_photo_uri
+    type: string/uri
+    required: true
+  - field: touchpoint_type
+    type: string
+    required: true
+  - field: note_text
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_PHOTO_EXIF
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - engagement_history
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - actor_id
+  - house_id
+  - event_at
+- event_code: EVT_ENG_ADGPRO_CHECKIN
+  name_vi: ADG Pro check-in khảo sát/thi công tại nhà
+  category: engagement
+  actor_roles:
+  - adg_pro
+  - epc_adg
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - field: checkin_photo_uri
+    type: string/uri
+    required: true
+  - field: purpose
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_PHOTO_EXIF
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - field_activity
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - actor_id
+  - house_id
+  - purpose
+  - event_at
+- event_code: EVT_ENG_REFERRAL_CREATED
+  name_vi: Tạo referral/giới thiệu (người giới thiệu đem lead về)
+  category: engagement
+  actor_roles:
+  - ctv
+  - ust
+  - citizen
+  - system
+  entity_scope: lead
+  required_keys:
+  - lead_id
+  payload_required:
+  - field: referrer_role
+    type: string
+    required: true
+  - field: referrer_id
+    type: string
+    required: true
+  - field: channel
+    type: string
+    required: true
+  - field: referral_evidence_uri
+    type: string/uri
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.85
+  fact_family:
+  - referral
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - referrer_id
+  - channel
+  - lead_id
+- event_code: EVT_ENG_LEAD_CREATED
+  name_vi: Tạo lead (nhu cầu) gắn House_ID nếu có
+  category: engagement
+  actor_roles:
+  - ust
+  - ctv
+  - citizen
+  - system
+  - adg_pro
+  entity_scope: lead
+  required_keys:
+  - lead_id
+  payload_required:
+  - field: house_id
+    type: string
+    required: false
+  - field: product_interest
+    type: string
+    required: true
+  - field: contact_pointer
+    type: string
+    required: false
+  - field: lead_source
+    type: string
+    required: true
+  - field: lead_valid_flag
+    type: bool
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.9
+  fact_family:
+  - lead_intent
+  state_impact:
+    job_pipeline:
+      from: null
+      to: lead
+  monetary_impact: false
+  idempotency_key_fields:
+  - lead_id
+- event_code: EVT_ENG_FREE_SERVICE_GRANTED
+  name_vi: Cấp dịch vụ miễn phí (quà tặng) cho dân/chính quyền
+  category: engagement
+  actor_roles:
+  - ust
+  - field_runner
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: beneficiary_type
+    type: string
+    required: true
+  - field: gift_code
+    type: string
+    required: true
+  - field: gift_delivery_mode
+    type: string
+    required: true
+  - field: gift_note
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.9
+  fact_family:
+  - benefit_delivery
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - beneficiary_type
+  - gift_code
+  - house_id
+- event_code: EVT_VER_HOUSE_QUALIFIED
+  name_vi: Nhà được qualify (đủ điều kiện bước đầu) bởi UST/Runner
+  category: verification
+  actor_roles:
+  - ust
+  - field_runner
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: qualification_reason
+    type: string
+    required: true
+  - field: house_build_stage
+    type: string
+    required: false
+  - field: roof_ready_flag
+    type: bool
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - house_qualification
+  state_impact:
+    house_lifecycle:
+      from: SHADOW
+      to: QUALIFIED
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - actor_id
+  - event_at
+- event_code: EVT_VER_CONSENT_REQUESTED
+  name_vi: Gửi yêu cầu consent (đồng ý) tới chủ nhà
+  category: verification
+  actor_roles:
+  - ust
+  - system
+  - field_runner
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: consent_template_version
+    type: string
+    required: true
+  - field: consent_channel
+    type: string
+    required: true
+  - field: consent_request_id
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - consent
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - consent_request_id
+- event_code: EVT_VER_CONSENT_OTP_VERIFIED
+  name_vi: Consent được xác nhận (OTP verified) – cho phép lưu PII
+  category: verification
+  actor_roles:
+  - citizen
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: consent_id
+    type: string
+    required: true
+  - field: consent_template_version
+    type: string
+    required: true
+  - field: otp_method
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_CONSENT_OTP
+  default_confidence: 1.0
+  fact_family:
+  - consent
+  state_impact:
+    house_lifecycle:
+      from: QUALIFIED
+      to: CLAIMED
+  monetary_impact: false
+  idempotency_key_fields:
+  - consent_id
+- event_code: EVT_VER_CONSENT_REVOKED
+  name_vi: Chủ nhà rút consent (revoked) – kích hoạt policy xóa/ẩn PII
+  category: verification
+  actor_roles:
+  - citizen
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: consent_id
+    type: string
+    required: true
+  - field: revoke_reason
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - consent
+  state_impact:
+    house_lifecycle:
+      from: CLAIMED
+      to: QUALIFIED
+  monetary_impact: false
+  idempotency_key_fields:
+  - consent_id
+  - house_id
+- event_code: EVT_VER_EVIDENCE_PACK_SUBMITTED
+  name_vi: Nộp evidence pack (bộ bằng chứng số) cho một bước nghiệp vụ
+  category: verification
+  actor_roles:
+  - ust
+  - adg_pro
+  - epc_adg
+  - field_runner
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: evidence_pack_uri
+    type: string/uri
+    required: true
+  - field: evidence_type
+    type: string
+    required: true
+  - field: img_metadata_valid_flag
+    type: bool
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_PHOTO_EXIF
+  default_confidence: 0.95
+  fact_family:
+  - evidence_pack
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - evidence_pack_uri
+- event_code: EVT_VER_EVIDENCE_PACK_VALIDATED
+  name_vi: Hệ thống chấm evidence pack (pass/fail, score)
+  category: verification
+  actor_roles:
+  - system
+  - data_lead
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: evidence_pack_uri
+    type: string/uri
+    required: true
+  - field: evidence_score_0_100
+    type: int
+    required: true
+  - field: pass_flag
+    type: bool
+    required: true
+  - field: geo_deviation_meters
+    type: float
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - evidence_pack_score
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - evidence_pack_uri
+  - pass_flag
+- event_code: EVT_TRX_SITE_SURVEY_STARTED
+  name_vi: Bắt đầu khảo sát tại nhà (Survey Started)
+  category: transaction
+  actor_roles:
+  - ust
+  - adgpro
+  - epc_adg
+  - field_runner
+  entity_scope: lead+house
+  required_keys:
+  - house_id
+  - lead_id
+  - commune_id
+  - product_code
+  payload_required:
+  - actor_gps_lat
+  - actor_gps_lng
+  - started_at
+  evidence_required:
+  - geo_checkin
+  - photo_site
+  default_confidence: 0.95
+  fact_family: ops_sla
+  state_impact:
+    house_lifecycle_status: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - lead_id
+  - started_at
+- event_code: EVT_OPS_REWORK_OPENED
+  name_vi: Mở việc làm lại (Rework Opened)
+  category: transaction
+  actor_roles:
+  - adgpro
+  - epc_adg
+  - field_runner
+  - system
+  entity_scope: job+house
+  required_keys:
+  - job_id
+  - house_id
+  - commune_id
+  - product_code
+  payload_required:
+  - rework_reason_code
+  - opened_at
+  evidence_required:
+  - photo_issue
+  - geo_checkin
+  default_confidence: 0.9
+  fact_family: ops_quality
+  state_impact:
+    house_lifecycle_status: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - job_id
+  - opened_at
+  - rework_reason_code
+- event_code: EVT_TRX_SITE_SURVEY_COMPLETED
+  name_vi: Khảo sát hoàn tất (đo đạc, tính toán) – chuẩn bị báo giá
+  category: transaction
+  actor_roles:
+  - adg_pro
+  - epc_adg
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - field: survey_report_uri
+    type: string/uri
+    required: true
+  - field: estimated_capacity_kwp
+    type: float
+    required: false
+  - field: product_code
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_LINK
+  - EV_PHOTO_EXIF
+  default_confidence: 0.95
+  fact_family:
+  - survey
+  state_impact:
+    job_pipeline:
+      from: lead
+      to: survey
+  monetary_impact: false
+  idempotency_key_fields:
+  - job_id
+  - survey_report_uri
+- event_code: EVT_TRX_CPQ_QUOTE_CREATED
+  name_vi: Tạo báo giá CPQ (Configure-Price-Quote | cấu hình-giá-báo giá)
+  category: transaction
+  actor_roles:
+  - ust
+  - system
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - field: vat_mode
+    type: string
+    required: true
+  - field: install_vat_rate
+    type: float
+    required: true
+  - field: goods_vat_rate
+    type: float
+    required: true
+  - field: net_sales_ex_vat_vnd
+    type: int
+    required: false
+  - field: vat_amount_vnd
+    type: int
+    required: false
+  - field: vat_rate
+    type: float
+    required: true
+  - field: vat_included_flag
+    type: bool
+    required: true
+  - field: cpq_quote_id
+    type: string
+    required: true
+  - field: product_code
+    type: string
+    required: true
+  - field: gross_order_value_vnd
+    type: int
+    required: true
+  - field: discount_vnd
+    type: int
+    required: false
+  - field: quote_uri
+    type: string/uri
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - pricing_quote
+  state_impact:
+    job_pipeline:
+      from: survey
+      to: quote
+  monetary_impact: false
+  idempotency_key_fields:
+  - cpq_quote_id
+- event_code: EVT_TRX_ORDER_SIGNED
+  name_vi: Chốt hợp đồng/đơn hàng (ký)
+  category: transaction
+  actor_roles:
+  - citizen
+  - ust
+  - system
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - field: vat_mode
+    type: string
+    required: true
+  - field: install_vat_rate
+    type: float
+    required: true
+  - field: goods_vat_rate
+    type: float
+    required: true
+  - field: net_sales_ex_vat_vnd
+    type: int
+    required: false
+  - field: vat_amount_vnd
+    type: int
+    required: false
+  - field: vat_rate
+    type: float
+    required: true
+  - field: vat_included_flag
+    type: bool
+    required: true
+  - field: contract_id
+    type: string
+    required: true
+  - field: contract_sign_method
+    type: string
+    required: true
+  - field: gross_order_value_vnd
+    type: int
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_DOC_SIGN
+  default_confidence: 1.0
+  fact_family:
+  - contract
+  state_impact:
+    job_pipeline:
+      from: quote
+      to: close
+  monetary_impact: false
+  idempotency_key_fields:
+  - contract_id
+- event_code: EVT_TRX_JOB_STARTED
+  name_vi: Bắt đầu thi công
+  category: transaction
+  actor_roles:
+  - adg_pro
+  - epc_adg
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - field: installer_role
+    type: string
+    required: true
+  - field: start_photo_uri
+    type: string/uri
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_PHOTO_EXIF
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - install_progress
+  state_impact:
+    job_pipeline:
+      from: close
+      to: install
+  monetary_impact: false
+  idempotency_key_fields:
+  - job_id
+  - event_at
+  - installer_role
+- event_code: EVT_TRX_INSTALL_COMPLETED
+  name_vi: Hoàn tất lắp đặt
+  category: transaction
+  actor_roles:
+  - adg_pro
+  - epc_adg
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - *id001
+  - *id002
+  - *id003
+  - *id004
+  - field: completion_photo_uri
+    type: string/uri
+    required: true
+  - field: installer_role
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_GEO
+  - EV_BEFORE_AFTER
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - install_progress
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - job_id
+  - completion_photo_uri
+- event_code: EVT_TRX_QA_PASSED
+  name_vi: QA đạt (kiểm tra chất lượng qua checklist)
+  category: transaction
+  actor_roles:
+  - field_runner
+  - epc_adg
+  - system
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - field: qa_checklist_id
+    type: string
+    required: true
+  - field: pass_flag
+    type: bool
+    required: true
+  - field: qa_note
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_QA_CHECKLIST
+  default_confidence: 1.0
+  fact_family:
+  - qa
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - qa_checklist_id
+  - pass_flag
+- event_code: EVT_TRX_HANDOVER_SIGNED
+  name_vi: Bàn giao/ nghiệm thu ký
+  category: transaction
+  actor_roles:
+  - citizen
+  - field_runner
+  - ust
+  - system
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  payload_required:
+  - field: handover_doc_id
+    type: string
+    required: true
+  - field: handover_method
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_DOC_SIGN
+  - EV_BEFORE_AFTER
+  default_confidence: 1.0
+  fact_family:
+  - handover
+  state_impact:
+    job_pipeline:
+      from: install
+      to: handover
+  monetary_impact: false
+  idempotency_key_fields:
+  - handover_doc_id
+- event_code: EVT_FIN_CASH_COLLECTED
+  name_vi: Thu tiền (tiền thật đã về) – kích hoạt split engine
+  category: financial
+  actor_roles:
+  - finance_controller
+  - system
+  entity_scope: payment
+  required_keys:
+  - job_id
+  - house_id
+  - txn_id
+  payload_required:
+  - field: vat_mode
+    type: string
+    required: true
+  - field: install_vat_rate
+    type: float
+    required: true
+  - field: goods_vat_rate
+    type: float
+    required: true
+  - field: net_sales_ex_vat_vnd
+    type: int
+    required: false
+  - field: vat_amount_vnd
+    type: int
+    required: false
+  - field: vat_rate
+    type: float
+    required: true
+  - field: vat_included_flag
+    type: bool
+    required: true
+  - field: product_code
+    type: string
+    required: true
+  - field: txn_id
+    type: string
+    required: true
+  - field: gross_order_value_vnd
+    type: int
+    required: true
+  - field: cash_collected_vnd
+    type: int
+    required: true
+  - field: payment_method
+    type: string
+    required: true
+  - field: bank_ref
+    type: string
+    required: false
+  - field: idempotency_key
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_TXN_PROOF
+  default_confidence: 1.0
+  fact_family:
+  - cash
+  state_impact:
+    job_pipeline:
+      from: handover
+      to: cash
+    house_lifecycle:
+      from: CLAIMED
+      to: FINANCIAL
+  monetary_impact: true
+  split_rule_ref: AUTO_SPLIT_CASH_COLLECTED_V1
+  idempotency_key_fields:
+  - idempotency_key
+  vat_mode_suggested: mixed_goods_install
+- event_code: EVT_FIN_SPLIT_ALLOCATED
+  name_vi: Hệ thống tạo bảng phân bổ (allocation) theo split rule
+  category: financial
+  actor_roles:
+  - system
+  entity_scope: payment
+  required_keys:
+  - job_id
+  - txn_id
+  payload_required:
+  - field: split_rule_ref
+    type: string
+    required: true
+  - field: allocation_json
+    type: json
+    required: true
+  - field: risk_reserve_wallet_vnd
+    type: int
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - allocation
+  state_impact: {}
+  monetary_impact: true
+  idempotency_key_fields:
+  - txn_id
+  - split_rule_ref
+- event_code: EVT_FIN_PAYOUT_SENT
+  name_vi: Chi trả thưởng/chi phí ra ví (payout sent)
+  category: financial
+  actor_roles:
+  - finance_controller
+  - system
+  entity_scope: payment
+  required_keys:
+  - payout_id
+  - txn_id
+  payload_required:
+  - field: payout_id
+    type: string
+    required: true
+  - field: wallet_code
+    type: string
+    required: true
+  - field: amount_vnd
+    type: int
+    required: true
+  - field: recipient_role
+    type: string
+    required: true
+  - field: recipient_id
+    type: string
+    required: true
+  - field: payout_method
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_TXN_PROOF
+  default_confidence: 1.0
+  fact_family:
+  - payout
+  state_impact: {}
+  monetary_impact: true
+  idempotency_key_fields:
+  - payout_id
+- event_code: EVT_FIN_RECONCILED
+  name_vi: Đối soát ledger (reconciled) – khóa sổ
+  category: financial
+  actor_roles:
+  - finance_controller
+  - system
+  entity_scope: payment
+  required_keys:
+  - reconcile_id
+  - txn_id
+  payload_required:
+  - field: reconcile_id
+    type: string
+    required: true
+  - field: reconcile_diff_vnd
+    type: int
+    required: true
+  - field: note
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_RECONCILE
+  default_confidence: 1.0
+  fact_family:
+  - reconcile
+  state_impact: {}
+  monetary_impact: true
+  idempotency_key_fields:
+  - reconcile_id
+- event_code: EVT_ENG_NEIGHBOR_INFLUENCE_EMITTED
+  name_vi: Hệ thống phát tín hiệu lan truyền sang hàng xóm sau khi có job thành công
+  category: engagement
+  actor_roles:
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: source_house_id
+    type: string
+    required: true
+  - field: cluster_id
+    type: string
+    required: true
+  - field: neighbor_radius_m
+    type: float
+    required: true
+  - field: influence_weight
+    type: float
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - spatial_influence
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - source_house_id
+  - cluster_id
+  - event_at
+- event_code: EVT_FIN_INVOICE_ISSUED
+  name_vi: Phát hành hóa đơn VAT (Invoice issued)
+  category: financial
+  actor_roles:
+  - finance_controller
+  - system
+  entity_scope: job
+  required_keys:
+  - job_id
+  - house_id
+  - invoice_id
+  payload_required:
+  - field: vat_mode
+    type: string
+    required: true
+  - field: install_vat_rate
+    type: float
+    required: true
+  - field: goods_vat_rate
+    type: float
+    required: true
+  - field: invoice_id
+    type: string
+    required: true
+  - field: invoice_date
+    type: datetime
+    required: true
+  - field: gross_order_value_vnd
+    type: int
+    required: true
+  - field: vat_included_flag
+    type: bool
+    required: true
+  - field: vat_rate
+    type: float
+    required: true
+  - field: vat_amount_vnd
+    type: int
+    required: false
+  - field: net_sales_ex_vat_vnd
+    type: int
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_TXN_PROOF
+  default_confidence: 1.0
+  fact_family:
+  - invoice
+  state_impact: {}
+  monetary_impact: true
+  idempotency_key_fields:
+  - invoice_id
+- event_code: EVT_FIN_VAT_REMITTED
+  name_vi: Nộp VAT (VAT remitted) vào ngân sách
+  category: financial
+  actor_roles:
+  - finance_controller
+  - system
+  entity_scope: payment
+  required_keys:
+  - vat_payment_id
+  payload_required:
+  - field: vat_payment_id
+    type: string
+    required: true
+  - field: period
+    type: string
+    required: true
+  - field: amount_vnd
+    type: int
+    required: true
+  - field: bank_ref
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_TXN_PROOF
+  - EV_RECONCILE
+  default_confidence: 1.0
+  fact_family:
+  - vat_remit
+  state_impact: {}
+  monetary_impact: true
+  idempotency_key_fields:
+  - vat_payment_id
+- event_code: EVT_DISC_VDCD_PACK_CREATED
+  name_vi: Tạo gói VDCD House_ID (2D/3D/GeoJSON/API) cho nhà
+  category: discovery
+  actor_roles:
+  - system
+  - data_lead
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: vdcd_pack_id
+    type: string
+    required: true
+  - field: vdcd_2d_pack_uri
+    type: string/uri
+    required: true
+  - field: vdcd_3d_pack_uri
+    type: string/uri
+    required: false
+  - field: vdcd_geojson_uri
+    type: string/uri
+    required: true
+  - field: vdcd_api_url
+    type: string/uri
+    required: true
+  - field: roof_area_m2
+    type: float
+    required: false
+  - field: installable_area_m2
+    type: float
+    required: false
+  - field: max_pv_capacity_kwp
+    type: float
+    required: false
+  - field: vdcd_quality_score_0_100
+    type: int
+    required: false
+  - field: artifact_hash_sha256
+    type: string
+    required: true
+  - field: source_batch_id
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_QA_CHECKLIST
+  default_confidence: 0.9
+  fact_family:
+  - vdcd_pack
+  - roof_geometry
+  state_impact:
+    house_lifecycle:
+      from: SHADOW
+      to: SHADOW
+  monetary_impact: false
+  idempotency_key_fields:
+  - vdcd_pack_id
+  - house_id
+  - artifact_hash_sha256
+- event_code: EVT_VER_VDCD_QA_PASSED
+  name_vi: QA gói VDCD đạt (pass) cho nhà
+  category: verification
+  actor_roles:
+  - data_lead
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: vdcd_pack_id
+    type: string
+    required: true
+  - field: qa_pass_flag
+    type: bool
+    required: true
+  - field: qa_score_0_100
+    type: int
+    required: true
+  - field: qa_checklist_uri
+    type: string/uri
+    required: true
+  - field: issues_count
+    type: int
+    required: false
+  - field: artifact_hash_sha256
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  - EV_QA_CHECKLIST
+  default_confidence: 1.0
+  fact_family:
+  - vdcd_quality
+  state_impact:
+    house_lifecycle:
+      from: SHADOW
+      to: SHADOW
+  monetary_impact: false
+  idempotency_key_fields:
+  - vdcd_pack_id
+  - artifact_hash_sha256
+- event_code: EVT_DISC_VDCD_API_PUBLISHED
+  name_vi: Publish API/GeoJSON cho gói VDCD
+  category: discovery
+  actor_roles:
+  - system
+  - data_lead
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: vdcd_pack_id
+    type: string
+    required: true
+  - field: vdcd_api_url
+    type: string/uri
+    required: true
+  - field: api_version
+    type: string
+    required: true
+  - field: dataset_version
+    type: string
+    required: true
+  - field: checksum_sha256
+    type: string
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - vdcd_api
+  state_impact:
+    house_lifecycle:
+      from: SHADOW
+      to: SHADOW
+  monetary_impact: false
+  idempotency_key_fields:
+  - vdcd_pack_id
+  - api_version
+  - checksum_sha256
+- event_code: EVT_FIN_PILOT_BUDGET_SET
+  name_vi: Chốt ngân sách pilot (CAPEX/OPEX/Buffer)
+  category: financial
+  actor_roles:
+  - finance_controller
+  - commander
+  entity_scope: pilot
+  required_keys:
+  - pilot_id
+  - commune_id
+  payload_required:
+  - field: capex_budget_vnd
+    type: int
+    required: true
+  - field: opex_budget_vnd
+    type: int
+    required: true
+  - field: working_capital_buffer_vnd
+    type: int
+    required: true
+  - field: os_pct_default
+    type: float
+    required: true
+  - field: effective_from
+    type: datetime
+    required: true
+  - field: approved_doc_uri
+    type: string/uri
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_DOC_SIGN
+  default_confidence: 1.0
+  fact_family:
+  - pilot_budget
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - pilot_id
+  - commune_id
+  - effective_from
+- event_code: EVT_FIN_CAPEX_COMMITTED
+  name_vi: Ghi nhận cam kết CAPEX (thiết bị/nền tảng/đầu tư ban đầu)
+  category: financial
+  actor_roles:
+  - finance_controller
+  entity_scope: pilot
+  required_keys:
+  - pilot_id
+  - commune_id
+  payload_required:
+  - field: capex_item_code
+    type: string
+    required: true
+  - field: amount_vnd
+    type: int
+    required: true
+  - field: vendor_code
+    type: string
+    required: false
+  - field: contract_uri
+    type: string/uri
+    required: false
+  - field: committed_at
+    type: datetime
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_DOC_SIGN
+  default_confidence: 1.0
+  fact_family:
+  - capex_ledger
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - capex_item_code
+  - amount_vnd
+  - committed_at
+- event_code: EVT_FIN_OPEX_INCURRED
+  name_vi: Ghi nhận OPEX (chi phí vận hành/marketing) phát sinh
+  category: financial
+  actor_roles:
+  - finance_controller
+  entity_scope: pilot
+  required_keys:
+  - pilot_id
+  - commune_id
+  payload_required:
+  - field: cost_center
+    type: string
+    required: true
+  - field: amount_vnd
+    type: int
+    required: true
+  - field: period_yyyymm
+    type: string
+    required: true
+  - field: invoice_uri
+    type: string/uri
+    required: false
+  - field: incurred_at
+    type: datetime
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_TXN_PROOF
+  default_confidence: 1.0
+  fact_family:
+  - opex_ledger
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - cost_center
+  - amount_vnd
+  - incurred_at
+- event_code: EVT_ENG_ROSTER_CORE_LOCKED
+  name_vi: Khóa roster core team (Field Runner/UST/ADG Pro/EPC/Clerk)
+  category: engagement
+  actor_roles:
+  - commander
+  - field_runner
+  - data_lead
+  entity_scope: pilot
+  required_keys:
+  - pilot_id
+  - commune_id
+  payload_required:
+  - field: roster_version
+    type: string
+    required: true
+  - field: required_positions_json
+    type: json
+    required: true
+  - field: filled_positions_json
+    type: json
+    required: true
+  - field: roster_fill_rate
+    type: float
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - hr_roster
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - pilot_id
+  - commune_id
+  - roster_version
+- event_code: EVT_ENG_ROLE_ASSIGNED
+  name_vi: Gán vai trò cho user nội bộ (không PII)
+  category: engagement
+  actor_roles:
+  - commander
+  - field_runner
+  entity_scope: roster
+  required_keys:
+  - pilot_id
+  - commune_id
+  - user_id
+  payload_required:
+  - field: user_id
+    type: string
+    required: true
+  - field: role_code
+    type: string
+    required: true
+  - field: start_at
+    type: datetime
+    required: true
+  - field: end_at
+    type: datetime
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 1.0
+  fact_family:
+  - hr_assignment
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - user_id
+  - role_code
+  - start_at
+- event_code: EVT_ENG_CAPACITY_SET
+  name_vi: Chốt năng lực chịu tải theo vai trò (capacity)
+  category: engagement
+  actor_roles:
+  - commander
+  - field_runner
+  - data_lead
+  entity_scope: pilot
+  required_keys:
+  - pilot_id
+  - commune_id
+  payload_required:
+  - field: capacity_model_code
+    type: string
+    required: true
+  - field: capacity_json
+    type: json
+    required: true
+  - field: effective_from
+    type: datetime
+    required: true
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.95
+  fact_family:
+  - capacity_model
+  state_impact: {}
+  monetary_impact: false
+  idempotency_key_fields:
+  - capacity_model_code
+  - effective_from
+- event_code: EVT_HOUSE_BUILT_YEAR_SET
+  name_vi: Ghi nhận năm xây dựng nhà (built_year)
+  category: house_profile
+  actor_roles:
+  - ust
+  - field_runner
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: built_year
+    type: int(YYYY)
+    required: true
+  - field: source
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.7
+  fact_family:
+  - house_age
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - built_year
+- event_code: EVT_HOUSE_LAST_MAJOR_RENOVATION_YEAR_SET
+  name_vi: Ghi nhận năm cải tạo lớn gần nhất
+  category: house_profile
+  actor_roles:
+  - ust
+  - field_runner
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: renovation_year
+    type: int(YYYY)
+    required: true
+  - field: scope
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.7
+  fact_family:
+  - house_age
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - renovation_year
+- event_code: EVT_HOUSE_EXPECTED_COMPLETION_SET
+  name_vi: Ghi nhận ngày dự kiến hoàn thiện (nhà đang xây)
+  category: house_profile
+  actor_roles:
+  - ust
+  - field_runner
+  - system
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: expected_completion_date
+    type: date(YYYY-MM-DD)
+    required: true
+  - field: construction_stage
+    type: string
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  - EV_LINK
+  default_confidence: 0.6
+  fact_family:
+  - new_build
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - expected_completion_date
+- event_code: EVT_HOUSE_TAG_ADDED
+  name_vi: Thêm tag cho House_ID
+  category: tagging
+  actor_roles:
+  - system
+  - ust
+  - field_runner
+  entity_scope: house
+  required_keys:
+  - house_id
+  payload_required:
+  - field: tag_code
+    type: string
+    required: true
+  - field: tag_value
+    type: string
+    required: false
+  - field: expiry_date
+    type: date(YYYY-MM-DD)
+    required: false
+  evidence_required:
+  - EV_TIME
+  - EV_ACTOR
+  default_confidence: 0.8
+  fact_family:
+  - house_tags
+  state_impact:
+    house_lifecycle:
+      from: null
+      to: null
+  monetary_impact: false
+  idempotency_key_fields:
+  - house_id
+  - tag_code
+  - tag_value

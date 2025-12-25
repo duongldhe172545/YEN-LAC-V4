@@ -1,0 +1,40 @@
+template_code: A13
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Payout request – chi tiền theo gate PASS.
+primary_key:
+- payout_request_id
+secondary_keys:
+- gate_decision_id
+- beneficiary_actor_id
+- payout_status
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - payout_request_id
+  - gate_decision_id
+  - request_ts
+  - beneficiary_actor_id
+  - payout_amount_vnd
+  - payout_channel
+  - payout_status
+  - sent_ts
+  - reference_hash
+  - notes
+  drop_columns: []
+enums:
+  payout_channel:
+  - BANK_TRANSFER
+  - EWALLET
+  - CASH
+  - OTHER
+  payout_status:
+  - REQUESTED
+  - SENT
+  - FAILED
+  - REVERSED
+validation_rules_vi:
+- payout_request_id/gate_decision_id/request_ts/beneficiary_actor_id/payout_amount_vnd/payout_status
+  là bắt buộc.
+- Không chi nếu gate FAIL hoặc evidence fail.
+- Không lưu số tài khoản thật; dùng reference_hash.

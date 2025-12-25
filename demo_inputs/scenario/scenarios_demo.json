@@ -1,0 +1,26 @@
+[
+  {
+    "scenario_id": "SC_BASE",
+    "name": "Base (điều kiện bình thường)",
+    "params": {
+      "evidence_pass_rate": 0.92,
+      "unconsented_pii_risk": 0
+    }
+  },
+  {
+    "scenario_id": "SC_BAD_EVIDENCE",
+    "name": "Evidence kém (cần throttle)",
+    "params": {
+      "evidence_pass_rate": 0.72,
+      "unconsented_pii_risk": 0
+    }
+  },
+  {
+    "scenario_id": "SC_PII_CRISIS",
+    "name": "PII chưa consent (hard stop)",
+    "params": {
+      "evidence_pass_rate": 0.95,
+      "unconsented_pii_risk": 1
+    }
+  }
+]

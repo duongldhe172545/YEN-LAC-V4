@@ -1,0 +1,54 @@
+template_code: A3
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Job Master – trục nối event ↔ vận hành (ops).
+primary_key:
+- job_id
+secondary_keys:
+- house_id
+- product_code
+- job_status
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - job_id
+  - house_id
+  - product_code
+  - job_created_ts
+  - job_status
+  - ust_actor_id
+  - field_runner_actor_id
+  - adg_actor_id
+  - lead_id
+  - quote_id
+  - order_id
+  - consent_snapshot
+  - geo_unit_code
+  - source_batch_id
+  - notes
+  - source_uri
+  - provider_job_ref
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+enums:
+  product_code:
+  - SOLAR
+  - TUBEP
+  - OTHER
+  job_status:
+  - NEW
+  - PLANNED
+  - IN_PROGRESS
+  - DONE
+  - CANCELLED
+  consent_snapshot:
+  - CONSENTED
+  - NOT_CONSENTED
+  - PENDING
+  - UNKNOWN
+validation_rules_vi:
+- job_id, house_id, product_code, job_created_ts, job_status là bắt buộc.
+- Không ghi PII (SĐT/CCCD/tên thật) vào job_master.
+- job_status và product_code phải thuộc enum.
+- Các *_actor_id là mã nội bộ (pseudonymous), nên tồn tại trong actor_master.

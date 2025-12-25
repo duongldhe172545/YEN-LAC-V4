@@ -1,0 +1,2 @@
+incident_id,geo_unit_code,reported_ts,channel,severity,summary,action_taken,status,evidence_uri,owner_actor_id
+INC_0001,YL_XA01,2025-12-24T13:00:00,ZALO_GROUP,HIGH,Rumor about tax inspection,Use approved messaging + call UBND,RESOLVED,drive://.../screenshot.png,FIELD_RUNNER_01

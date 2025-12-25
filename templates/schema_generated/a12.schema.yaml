@@ -1,0 +1,35 @@
+template_code: A12
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Gate decision – PASS/FAIL mở khóa trả tiền.
+primary_key:
+- gate_decision_id
+secondary_keys:
+- linked_idempotency_key
+- gate_result
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - gate_decision_id
+  - linked_idempotency_key
+  - decision_ts
+  - gate_result
+  - evidence_pass_rate
+  - consent_snapshot
+  - rule_version
+  - reason_codes
+  - notes
+  drop_columns: []
+enums:
+  gate_result:
+  - PASS
+  - FAIL
+  consent_snapshot:
+  - CONSENTED
+  - NOT_CONSENTED
+  - PENDING
+  - UNKNOWN
+validation_rules_vi:
+- gate_decision_id/linked_idempotency_key/decision_ts/gate_result là bắt buộc.
+- 'Gate theo Evidence: No Evidence + Bad Evidence No Pay.'
+- Nếu consent_snapshot != CONSENTED thì nên FAIL (kill-switch consent).

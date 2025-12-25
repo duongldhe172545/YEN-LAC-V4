@@ -1,0 +1,2 @@
+house_id,geo_unit_code,address_text,lat,lng,roof_type,roof_area_m2,built_year,source_batch_id
+YLX01_H0001,YL_XA01,"Thon A, Xa Yen Lac",21.12,105.56,TON,100,2012,BATCH_20251224_01

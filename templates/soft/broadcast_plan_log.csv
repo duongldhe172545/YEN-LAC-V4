@@ -1,0 +1,2 @@
+broadcast_id,geo_unit_code,channel,scheduled_ts,actual_ts,script_message_id,evidence_uri,run_by,notes
+BC_0001,YL_XA01,LOUDSPEAKER,2025-12-23T06:00:00,2025-12-23T06:05:00,MSG_001,drive://.../loa.mp3,UST_0007,

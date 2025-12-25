@@ -1,0 +1,30 @@
+template_code: TMP_SEASONALITY_CALENDAR
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/seasonality_calendar.csv
+keys:
+- geo_unit_code
+- period_start
+- period_end
+purpose_vi: Lịch mùa vụ/lễ hội/thi cử ảnh hưởng lead/ops/cash.
+examples: constraint_type=HARVEST
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - geo_unit_code
+  - period_start
+  - period_end
+  - constraint_type
+  - impact
+  - mitigation_plan
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

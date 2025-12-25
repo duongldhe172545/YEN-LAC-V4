@@ -1,0 +1,213 @@
+template_code: A1_house_master
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Danh bạ nhà chuẩn (House master) – trục join cho toàn hệ thống. Non-PII.
+  Append-only.
+primary_key:
+- house_id
+secondary_keys:
+- geo_unit_code
+- source_batch_id
+pii_policy_vi: Không lưu PII trong template này. Nếu phát hiện PII → quarantine. PII
+  chỉ lưu trong PII Vault sau Consent.
+columns:
+- name: house_id
+  category: required
+  type: string
+  desc_vi: Mã nhà chuẩn (khóa chính). Không chứa PII.
+  required: true
+  ingest_policy: canonical
+- name: geo_unit_code
+  category: required
+  type: string
+  desc_vi: Mã đơn vị hành chính (xã/thôn/cụm).
+  required: true
+  ingest_policy: canonical
+- name: capture_ts
+  category: required
+  type: datetime_iso
+  desc_vi: Thời điểm ghi nhận (ISO 8601).
+  required: true
+  ingest_policy: canonical
+- name: source_batch_id
+  category: required
+  type: string
+  desc_vi: Mã lô nạp dữ liệu (audit trace).
+  required: true
+  ingest_policy: canonical
+- name: collector_actor_id
+  category: required
+  type: string
+  desc_vi: Mã người thu thập (actor_id, không phải PII).
+  required: true
+  ingest_policy: canonical
+- name: lat
+  category: recommended
+  type: number
+  desc_vi: Vĩ độ (tọa độ điểm).
+  required: false
+  ingest_policy: canonical
+- name: lng
+  category: recommended
+  type: number
+  desc_vi: Kinh độ (tọa độ điểm).
+  required: false
+  ingest_policy: canonical
+- name: roof_polygon_wkt
+  category: recommended
+  type: string
+  desc_vi: Đa giác mái theo WKT (nếu có).
+  required: false
+  ingest_policy: canonical
+- name: roof_polygon_geojson
+  category: recommended
+  type: string
+  desc_vi: Đa giác mái theo GeoJSON (nếu có).
+  required: false
+  ingest_policy: canonical
+- name: roof_area_m2
+  category: recommended
+  type: number
+  desc_vi: Diện tích mái (m²).
+  required: false
+  ingest_policy: canonical
+- name: usable_area_m2
+  category: recommended
+  type: number
+  desc_vi: Diện tích khả dụng (m²). ≤ roof_area_m2.
+  required: false
+  ingest_policy: canonical
+- name: roof_material
+  category: recommended
+  type: enum_roof_material
+  desc_vi: Vật liệu mái (enum).
+  required: false
+  ingest_policy: canonical
+- name: roof_slope_deg
+  category: recommended
+  type: number
+  desc_vi: Độ dốc mái (độ).
+  required: false
+  ingest_policy: canonical
+- name: roof_orientation
+  category: recommended
+  type: enum_roof_orientation
+  desc_vi: Hướng mái chính (enum).
+  required: false
+  ingest_policy: canonical
+- name: built_year
+  category: recommended
+  type: integer
+  desc_vi: Năm xây nhà (nếu biết).
+  required: false
+  ingest_policy: canonical
+- name: renovation_year
+  category: recommended
+  type: integer
+  desc_vi: Năm sửa lớn gần nhất (nếu có).
+  required: false
+  ingest_policy: canonical
+- name: age_bucket
+  category: recommended
+  type: enum_age_bucket
+  desc_vi: Nhóm tuổi nhà (enum).
+  required: false
+  ingest_policy: canonical
+- name: house_record_status
+  category: recommended
+  type: enum_house_record_status
+  desc_vi: Trạng thái bản ghi dữ liệu (enum).
+  required: false
+  ingest_policy: canonical
+- name: data_quality_score
+  category: recommended
+  type: number_0_1
+  desc_vi: Điểm chất lượng dữ liệu 0–1 (tùy chọn).
+  required: false
+  ingest_policy: canonical
+- name: notes_raw
+  category: provider_raw
+  type: string
+  desc_vi: Ghi chú thô (provider_raw). Không dùng làm KPI trực tiếp.
+  required: false
+  ingest_policy: canonical
+- name: ops_raci_hint
+  category: ops_only
+  type: string
+  desc_vi: Gợi ý RACI chạy cơm (KHÔNG ingest).
+  required: false
+  ingest_policy: drop
+- name: ops_cost_hint_vnd
+  category: ops_only
+  type: number
+  desc_vi: Ước lượng chi phí (VND) chạy cơm (KHÔNG ingest).
+  required: false
+  ingest_policy: drop
+enums:
+  roof_material:
+  - TON
+  - NGOI
+  - BE_TONG
+  - FIBER_CEMENT
+  - KHAC
+  roof_orientation:
+  - N
+  - NE
+  - E
+  - SE
+  - S
+  - SW
+  - W
+  - NW
+  age_bucket:
+  - '0_5'
+  - '5_10'
+  - '10_15'
+  - '15_20'
+  - '20_30'
+  - 30_PLUS
+  - UNKNOWN
+  house_record_status:
+  - RECEIVED
+  - VALIDATED
+  - QUARANTINED
+  - REJECTED
+ingest_policy:
+  canonical_ingest_columns:
+  - house_id
+  - geo_unit_code
+  - capture_ts
+  - source_batch_id
+  - collector_actor_id
+  - lat
+  - lng
+  - roof_polygon_wkt
+  - roof_polygon_geojson
+  - roof_area_m2
+  - usable_area_m2
+  - roof_material
+  - roof_slope_deg
+  - roof_orientation
+  - built_year
+  - renovation_year
+  - age_bucket
+  - house_record_status
+  - data_quality_score
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+  provider_raw_columns:
+  - notes_raw
+validation_rules_vi:
+- house_id không rỗng và đúng format dự án.
+- geo_unit_code phải thuộc whitelist Yên Lạc.
+- capture_ts đúng ISO 8601, không ở tương lai.
+- source_batch_id không rỗng để truy vết audit.
+- collector_actor_id phải tồn tại trong actor_master.
+- lat/lng nếu có phải nằm trong vùng Yên Lạc (check nhanh).
+- usable_area_m2 ≤ roof_area_m2 (nếu có).
+- built_year (nếu có) trong khoảng 1900–2026.
+- 'CẤM PII: không ghi tên/sđt/CCCD vào HOUSE_MASTER.'
+- 'Trùng house_id trong cùng batch: không overwrite; xử lý bằng quarantine/correction
+  event.'

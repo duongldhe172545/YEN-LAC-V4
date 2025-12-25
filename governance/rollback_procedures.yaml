@@ -1,0 +1,33 @@
+meta:
+  spec: Rollback_Procedures
+  version: v5.0.2
+  patch_id: P1-ROLLBACK
+  build_date: '2025-12-24'
+
+registry_rollback:
+  condition: "Alias collision OR fatal linter OR thresholds wrong tier"
+  max_time: "2h"
+  owner: "Data Lead"
+  steps:
+    - "Git revert commit hash"
+    - "Chạy validate_registry.py PASS"
+    - "Restart/reload OK Computer"
+    - "Smoke-test: 3 KPI (K0/K5/K7)"
+
+code_rollback:
+  condition: "Bug affecting payout/fraud/consent"
+  max_time: "30min"
+  owner: "Tech Lead"
+  steps:
+    - "Git tag rollback to previous release"
+    - "Deploy previous Docker image"
+    - "Verify kill-switch operational"
+
+data_rollback:
+  condition: "Ingest sai batch (duplicate/misaligned schema)"
+  max_time: "4h"
+  owner: "Data Lead"
+  steps:
+    - "Stop ingest for source_batch_id"
+    - "Move bad records to quarantine bucket"
+    - "Re-run ingest with fixed parser"

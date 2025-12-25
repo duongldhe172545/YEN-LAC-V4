@@ -1,0 +1,2 @@
+delivery_id,geo_unit_code,delivery_ts,deliverable_type,deliverable_uri,acceptance_status,accepted_by,accepted_ts,notes_raw
+DEL_0001,YL_XA01,2026-03-15T09:00:00,DASHBOARD,https://...,SIGNED,UBND_XA,2026-03-15T10:00:00,

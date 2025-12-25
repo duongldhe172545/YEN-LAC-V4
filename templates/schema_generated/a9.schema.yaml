@@ -1,0 +1,90 @@
+template_code: A9
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Evidence manifest – checklist bằng chứng theo event.
+primary_key:
+- manifest_id
+secondary_keys:
+- event_code
+- evidence_type
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - manifest_id
+  - event_code
+  - evidence_type
+  - requirement_level
+  - min_count
+  - max_age_hours
+  - geo_required
+  - hash_required
+  - notes
+  - source_uri
+  drop_columns: []
+enums:
+  event_code:
+  - EVT_DISC_DRONE_SCAN_CREATED
+  - EVT_DISC_LEGACY_IMPORT_CREATED
+  - EVT_DISC_CLUSTER_ASSIGNED
+  - EVT_ENG_UST_CHECKIN
+  - EVT_ENG_ADGPRO_CHECKIN
+  - EVT_ENG_REFERRAL_CREATED
+  - EVT_ENG_LEAD_CREATED
+  - EVT_ENG_FREE_SERVICE_GRANTED
+  - EVT_VER_HOUSE_QUALIFIED
+  - EVT_VER_CONSENT_REQUESTED
+  - EVT_VER_CONSENT_OTP_VERIFIED
+  - EVT_VER_CONSENT_REVOKED
+  - EVT_VER_EVIDENCE_PACK_SUBMITTED
+  - EVT_VER_EVIDENCE_PACK_VALIDATED
+  - EVT_TRX_SITE_SURVEY_STARTED
+  - EVT_OPS_REWORK_OPENED
+  - EVT_TRX_SITE_SURVEY_COMPLETED
+  - EVT_TRX_CPQ_QUOTE_CREATED
+  - EVT_TRX_ORDER_SIGNED
+  - EVT_TRX_JOB_STARTED
+  - EVT_TRX_INSTALL_COMPLETED
+  - EVT_TRX_QA_PASSED
+  - EVT_TRX_HANDOVER_SIGNED
+  - EVT_FIN_CASH_COLLECTED
+  - EVT_FIN_SPLIT_ALLOCATED
+  - EVT_FIN_PAYOUT_SENT
+  - EVT_FIN_RECONCILED
+  - EVT_ENG_NEIGHBOR_INFLUENCE_EMITTED
+  - EVT_FIN_INVOICE_ISSUED
+  - EVT_FIN_VAT_REMITTED
+  - EVT_DISC_VDCD_PACK_CREATED
+  - EVT_VER_VDCD_QA_PASSED
+  - EVT_DISC_VDCD_API_PUBLISHED
+  - EVT_FIN_PILOT_BUDGET_SET
+  - EVT_FIN_CAPEX_COMMITTED
+  - EVT_FIN_OPEX_INCURRED
+  - EVT_ENG_ROSTER_CORE_LOCKED
+  - EVT_ENG_ROLE_ASSIGNED
+  - EVT_ENG_CAPACITY_SET
+  - EVT_HOUSE_BUILT_YEAR_SET
+  - EVT_HOUSE_LAST_MAJOR_RENOVATION_YEAR_SET
+  - EVT_HOUSE_EXPECTED_COMPLETION_SET
+  - EVT_HOUSE_TAG_ADDED
+  evidence_type:
+  - PHOTO
+  - VIDEO
+  - GPS_TRACE
+  - FORM
+  - SIGNATURE
+  - AUDIO
+  - DOC
+  - OTHER
+  requirement_level:
+  - MUST
+  - SHOULD
+  - OPTIONAL
+  geo_required:
+  - 'YES'
+  - 'NO'
+  hash_required:
+  - 'YES'
+  - 'NO'
+validation_rules_vi:
+- event_code/evidence_type/requirement_level là bắt buộc.
+- 'Đây là luật gate: No Evidence + Bad Evidence No Pay.'

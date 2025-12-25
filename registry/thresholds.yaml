@@ -1,0 +1,718 @@
+meta:
+  registry: thresholds
+  version: v5.0.2
+  patch_id: P1-THRESHOLDS
+  build_date: '2025-12-24'
+  effective_date: '2025-12-24'
+  timezone: Asia/Bangkok
+  owners:
+    primary: Data Lead (HO)
+    backup: Finance Controller (HO)
+    commander: Commander (HO)
+    oncall: Field Runner (On-site)
+  review_cycle:
+    baseline_period_days: 14
+    next_review_due: '2026-01-07'
+    policy: Ngưỡng PROVISIONAL phải được hiệu chỉnh sau baseline. Kill-switch tuyệt đối (PII) giữ ngưỡng=0.
+  invariants:
+  - metric_code phải tồn tại trong registry/metrics.csv
+  - metric kill_switch=true phải có ít nhất 1 rule TIER_3_HARD_STOP
+  - mọi rule phải có action_tier ∈ {1,2,3} và khớp registry/runbook_actions.yaml.kill_switch_tiers
+  - 'append-only: sửa ngưỡng phải qua patch + decision log'
+  canonical_notes:
+    evidence_metric: evidence_pass_rate
+    alias_compat:
+    - risk_evidence_pass_rate (alias legacy)
+  compat:
+    runbook_actions_schema: 'kill_switch_tiers (tier: 1/2/3)'
+thresholds:
+- metric_code: unconsented_pii_risk
+  k_level: K6
+  unit: count
+  window: point-in-time
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 0
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 0
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 0
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  notes: 'LOCKED: Không được lưu PII khi chưa consent. Ngưỡng=0 là tuyệt đối; mọi vi phạm phải cách ly + ngắt.'
+  evidence_ref: P0.1
+- metric_code: consent_rate
+  k_level: K6
+  unit: rate
+  window: 7d
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: <
+      value: 0.9
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: <
+      value: 0.85
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 0.8
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: đặt ngưỡng khởi tạo để tránh drift consent. Review sau baseline 14 ngày.'
+  evidence_ref: V5/A8
+- metric_code: pending_consent_aging_hours
+  k_level: K6
+  unit: hours
+  window: point-in-time
+  direction: higher_is_worse
+  kill_switch: false
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 24
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 48
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 72
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'P0.1 rule: >48h cảnh báo/ép xin consent hoặc xóa. Tier3>72h để stop ingest/payout liên quan.'
+  evidence_ref: P0.1
+- metric_code: evidence_pass_rate
+  k_level: K0
+  unit: rate
+  window: 7d
+  direction: lower_is_worse
+  kill_switch: false
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: <
+      value: 0.95
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: <
+      value: 0.9
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 0.8
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: CANONICAL (PA2). Nếu giảm mạnh → nguy cơ bằng chứng giả/thiếu. Review theo product/commune.
+  evidence_ref: P1 A7 + PA2
+- metric_code: risk_img_metadata_valid_flag
+  k_level: K6
+  unit: flag
+  window: point-in-time
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: ==
+      value: false
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: ==
+      value: false
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_1_WARNING
+    condition:
+      op: ==
+      value: false
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  notes: Nếu metadata ảnh/video không hợp lệ (EXIF/hash) → bad evidence → quarantine/reject theo A7.
+  evidence_ref: A7/A8
+- metric_code: sla_lead_to_survey_hours
+  k_level: K2
+  unit: hours
+  window: rolling_7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 36
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 48
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 72
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Theo ghi chú metric: mục tiêu ≤48h. Tier3 để chặn payout/lead routing nếu backlog vỡ.'
+  evidence_ref: metrics.csv notes
+- metric_code: sla_survey_to_quote_hours
+  k_level: K2
+  unit: hours
+  window: rolling_7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 18
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 24
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 48
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Theo ghi chú metric: mục tiêu ≤24h. Tier3 nếu pipeline báo giá tắc.'
+  evidence_ref: metrics.csv notes
+- metric_code: sla_breach_rate
+  k_level: K2
+  unit: rate
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 0.1
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 0.2
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 0.35
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: breach spike là dấu hiệu vỡ ops. Review theo baseline.'
+  evidence_ref: A8
+- metric_code: first_time_right_rate
+  k_level: K2
+  unit: rate
+  window: rolling_30d
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: <
+      value: 0.92
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: <
+      value: 0.9
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 0.85
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Gợi ý từ đề cương: ≥90%. Tier3 nếu chất lượng tụt sâu.'
+  evidence_ref: metrics.csv notes
+- metric_code: ops_data_latency_hours
+  k_level: K2
+  unit: hours
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 6
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 12
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 24
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Theo notes: KILL if widespread >24h.'
+  evidence_ref: metrics.csv notes
+- metric_code: ops_fallback_breach_count
+  k_level: K2
+  unit: count
+  window: point-in-time
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 0
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Gate: nếu breach fallback >0 thì dừng (cầu dao tổng).'
+  evidence_ref: metrics.csv notes
+- metric_code: complaint_resolution_time_hours
+  k_level: K6
+  unit: hours
+  window: 30d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 72
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 120
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 168
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: complaint aging kéo dài là rủi ro xã hội/gov. Review theo baseline.'
+  evidence_ref: A8
+- metric_code: data_fraud_rate
+  k_level: K6
+  unit: rate
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 0.02
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 0.05
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 0.1
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: đặt ngưỡng chống gian lận; cần calibrate theo baseline.'
+  evidence_ref: A8
+- metric_code: stuck_rate_critical
+  k_level: K6
+  unit: rate
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 0.03
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 0.06
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 0.1
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: tỷ lệ stuck case critical (bị kẹt) tăng → tắc pipeline/đứt payout.'
+  evidence_ref: A8
+- metric_code: fin_dso_days
+  k_level: K4
+  unit: days
+  window: point-in-time
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 14
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 21
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 30
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: cần calibrate theo chính sách thu/ứng. DSO tăng → cash gãy.'
+  evidence_ref: A8
+- metric_code: vam_payout_latency_hours
+  k_level: K4
+  unit: hours
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: false
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 48
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 72
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 96
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: payout chậm làm network vỡ. Review theo baseline.'
+  evidence_ref: A8
+- metric_code: fin_opex_spent_cum_vnd
+  k_level: K8
+  unit: vnd
+  window: 30d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value_ref:
+        metric_code: fin_pilot_opex_budget_vnd
+        multiplier: 1.0
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value_ref:
+        metric_code: fin_pilot_opex_budget_vnd
+        multiplier: 1.1
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: Kill khi vượt budget cap. Tier3 = vượt 110% budget.
+  evidence_ref: metrics.csv notes
+- metric_code: fin_runway_days
+  k_level: K8
+  unit: days
+  window: point-in-time
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: <
+      value: 30
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: <
+      value: 21
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 14
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PROVISIONAL: runway thấp → dừng mở rộng, ưu tiên thu tiền.'
+  evidence_ref: A8
+- metric_code: hr_roster_fill_rate
+  k_level: K8
+  unit: rate
+  window: point-in-time
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 1.0
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'Gate-0: nếu <100% roster fill thì không Go-Live.'
+  evidence_ref: metrics.csv notes
+- metric_code: hr_capacity_utilization_rate
+  k_level: K8
+  unit: rate
+  window: 7d
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 0.9
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 1.0
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 1.1
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: Nếu >1.0 kéo dài → quá tải → SLA vỡ.
+  evidence_ref: metrics.csv notes
+- metric_code: vdcd_qa_pass_rate
+  k_level: K6
+  unit: rate
+  window: 7d
+  direction: lower_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: <
+      value: 0.95
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: <
+      value: 0.9
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: <
+      value: 0.85
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: Nếu QA fail diện rộng → dữ liệu sai → risk. Placeholder nhưng có baseline gợi ý.
+  evidence_ref: metrics.csv notes
+- metric_code: war_room_decision_time_minutes
+  k_level: K8
+  unit: minutes
+  window: point-in-time
+  direction: higher_is_worse
+  kill_switch: true
+  tiers:
+  - tier: TIER_1_WARNING
+    condition:
+      op: '>'
+      value: 30
+      inclusive: true
+    response_time: 15m
+    action_time: 1h
+    action_tier: 1
+  - tier: TIER_2_THROTTLE
+    condition:
+      op: '>'
+      value: 60
+      inclusive: true
+    response_time: 5m
+    action_time: 30m
+    action_tier: 2
+  - tier: TIER_3_HARD_STOP
+    condition:
+      op: '>'
+      value: 120
+      inclusive: true
+    response_time: 2m
+    action_time: 15m
+    action_tier: 3
+  notes: 'PLACEHOLDER: incident SLA/war-room kẹt quyết định → cháy tài chính 30-60''.'
+  evidence_ref: A8

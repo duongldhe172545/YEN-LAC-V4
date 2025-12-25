@@ -1,0 +1,44 @@
+template_code: A8
+ssot_version: V5.0.2
+stage: POST_INGEST
+description_vi: Correction – sửa sai theo append-only.
+primary_key:
+- correction_id
+secondary_keys:
+- target_idempotency_key
+- fact_family
+pii_policy_vi: Không lưu PII trong template canonical. Nếu cần PII → PII Vault + Consent.
+ingest_policy:
+  canonical_ingest_columns:
+  - correction_id
+  - correction_ts
+  - actor_id
+  - target_idempotency_key
+  - fact_family
+  - new_payload_json
+  - reason_code
+  - notes
+  - source_batch_id
+  - source_uri
+  drop_columns:
+  - ops_raci_hint
+enums:
+  reason_code:
+  - DATA_ENTRY_ERROR
+  - DEVICE_ERROR
+  - SCHEMA_CHANGE
+  - OTHER
+  fact_family:
+  - ROOF_GEOMETRY
+  - SITE_SURVEY
+  - CONSENT
+  - QUOTE
+  - ORDER
+  - CASH
+  - INSTALL
+  - WARRANTY
+  - OTHER
+validation_rules_vi:
+- 'Không sửa dòng cũ: mọi sửa sai đi qua correction record (append-only).'
+- target_idempotency_key phải trỏ tới event đã tồn tại.
+- new_payload_json không được chứa PII.

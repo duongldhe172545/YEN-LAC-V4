@@ -1,0 +1,29 @@
+template_code: TMP_ECONOMIC_SNAPSHOT
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/economic_snapshot.csv
+keys:
+- geo_unit_code
+- snapshot_date
+purpose_vi: Snapshot thu nhập/mùa tiền/proxy tài chính để dự báo cash/DSO.
+examples: seasonal_cash_months=3,9,12
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - geo_unit_code
+  - snapshot_date
+  - income_band_distribution_json
+  - payment_behavior_proxy
+  - credit_access_proxy
+  - seasonal_cash_months
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

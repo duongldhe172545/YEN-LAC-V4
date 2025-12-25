@@ -1,0 +1,2 @@
+rain_check_id,house_id,requested_ts,promised_date,priority,reason,assigned_to,status
+RC_0001,YLX01_H0002,2025-12-24T11:20:00,2025-12-28,MED,CAP_REACHED,UST_0007,OPEN

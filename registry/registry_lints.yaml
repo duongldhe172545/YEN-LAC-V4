@@ -1,0 +1,20 @@
+# registry_lints V5.0.2 2025-12-24
+rules:
+  - id: EVT_CODE_PREFIX
+    severity: FATAL
+    description: "event_code must match ^EVT_[A-Z0-9_]+$"
+  - id: STATE_ENUM_UPPERCASE
+    severity: FATAL
+    description: "house_lifecycle_status must be one of SHADOW/QUALIFIED/CLAIMED/FINANCIAL/GOLDEN"
+  - id: METRIC_UNIT_STANDARD
+    severity: FATAL
+    description: "metric unit must end with _hours/_days/_vnd/_rate/_pct"
+  - id: THRESHOLD_METRIC_JOIN
+    severity: FATAL
+    description: "every threshold.metric_code must exist in metric registry or alias map"
+  - id: ALIAS_NO_CYCLE
+    severity: FATAL
+    description: "alias graph must not contain cycles"
+  - id: DEPENDENCY_NO_CYCLE
+    severity: FATAL
+    description: "metric dependency graph must not contain cycles"

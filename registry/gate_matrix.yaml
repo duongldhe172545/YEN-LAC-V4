@@ -1,0 +1,143 @@
+spec:
+  name: gate_control_matrix
+  version: v1.0
+  date: '2025-12-24'
+  notes: Canonical gate matrix aligned to metric_code + thresholds + event_code.
+gates:
+  gate_0:
+  - item: Định danh House_ID sạch (Data spine)
+    metrics:
+    - shadow_house_id_coverage
+    - verified_house_id_count
+    events:
+    - EVT_DISC_DRONE_SCAN_CREATED
+    - EVT_VER_ID_VERIFIED
+    action: 'Nếu coverage thấp: dừng mở rộng, fix ingest/dedup.'
+  - item: Consent & PII (đồng ý & dữ liệu nhạy cảm)
+    metrics:
+    - consent_rate
+    - pending_consent_aging_hours
+    - unconsented_pii_risk
+    events:
+    - EVT_VER_CONSENT_REQUESTED
+    - EVT_VER_CONSENT_OTP_VERIFIED
+    - EVT_VER_CONSENT_REVOKED
+    action: 'No consent: không lưu PII; aging>48h: ép xin consent hoặc xóa.'
+  - item: Evidence No Pay (bằng chứng)
+    metrics:
+    - evidence_pass_rate
+    - data_fraud_rate
+    - ops_fallback_breach_count
+    events:
+    - EVT_EVIDENCE_PACK_UPLOADED
+    - EVT_EVIDENCE_HASH_VERIFIED
+    action: Bad/no evidence => quarantine/reject, không payout.
+  - item: Ops & SLA tối thiểu
+    metrics:
+    - sla_lead_to_survey_hours
+    - sla_survey_to_quote_hours
+    - ops_sla_ontime_rate
+    - rework_rate
+    events:
+    - EVT_SURVEY_STARTED
+    - EVT_SURVEY_COMPLETED
+    - EVT_JOB_COMPLETED
+    action: SLA vỡ => throttle lead, tăng EPC dẫn đường.
+  - item: HR/Capacity (chịu tải)
+    metrics:
+    - hr_roster_fill_rate
+    - hr_capacity_utilization_rate
+    events:
+    - EVT_HR_ROSTER_SNAPSHOT
+    action: Thiếu roster => không Go-Live.
+  - item: Finance safety (đốt tiền & runway)
+    metrics:
+    - fin_burn_rate_monthly_vnd
+    - fin_runway_days
+    - fin_dso_days
+    - vam_payout_latency_hours
+    events:
+    - EVT_FIN_TXN_SETTLED
+    - EVT_PAYOUT_EXECUTED
+    action: Runway<60d hoặc DSO>7 => Hard Stop.
+  - item: Age coverage (tuổi nhà)
+    metrics:
+    - house_built_year_coverage_rate
+    - house_age_bucket_coverage_rate
+    events:
+    - EVT_HOUSE_BUILT_YEAR_SET
+    action: Thiếu tuổi nhà => không được chốt thiết kế/đề xuất cross-sell theo vòng
+      đời.
+  gate_1:
+  - item: Tiền thật (cash loop)
+    metrics:
+    - fin_dso_days
+    - vam_payout_latency_hours
+    events:
+    - EVT_FIN_TXN_SETTLED
+    - EVT_PAYOUT_EXECUTED
+    action: 'Nếu DSO xấu: siết điều khoản/thu trước/giảm rủi ro.'
+  - item: Job thật (ops loop)
+    metrics:
+    - ops_sla_ontime_rate
+    - rework_rate
+    events:
+    - EVT_JOB_COMPLETED
+    - EVT_QA_PASSED
+    action: Rework tăng => audit thợ + chuẩn hóa quy trình.
+  - item: Network thật (UST/ANC/ADGPro)
+    metrics:
+    - anc_active_nodes
+    - adgpro_active_count
+    events:
+    - EVT_ANC_NODE_ACTIVE
+    - EVT_ADGPRO_JOB_ACCEPTED
+    action: Payout chậm => network rơi; fix payout cadence.
+  - item: Data & Fraud (an toàn)
+    metrics:
+    - data_fraud_rate
+    - ops_manual_entry_flag
+    events:
+    - EVT_AUDIT_FLAGGED
+    - EVT_MANUAL_OVERRIDE_USED
+    action: Fraud spike => kill-switch, quarantine toàn bộ job liên quan.
+  - item: Adoption (K5 placeholder)
+    metrics:
+    - ust_dau_rate
+    events:
+    - EVT_APP_SESSION_STARTED
+    action: UST không bám app => dữ liệu drift; bắt buộc training + chứng cứ upload.
+  gate_1_5:
+  - item: Scale-ready (nhân bản)
+    metrics:
+    - replication_success_rate
+    - time_to_clone_commune_days
+    events:
+    - EVT_REPLICATION_RUN_STARTED
+    - EVT_REPLICATION_RUN_COMPLETED
+    action: 'PLACEHOLDER: khóa sau khi có 2 xã chạy ổn.'
+incident_response_sla:
+  Tier_1_Warning:
+    response_time: 15m
+    action_time: 1h
+    backup_owner: Deputy Head of Risk
+    escalation: N/A
+  Tier_2_Throttle:
+    response_time: 5m
+    action_time: 30m
+    backup_owner: CFO
+    escalation: CEO if >2h unresolved
+  Tier_3_Hard_Stop:
+    response_time: 2m
+    action_time: 15m
+    backup_owner: CEO
+    escalation: Board if >1h not reopened
+rollback_procedures:
+  registry_rollback:
+    condition: Alias governance violation hoặc fatal linter error
+    max_time: 2h
+    owner: Data Lead
+  code_rollback:
+    condition: Bug affecting payout/fraud detection
+    max_time: 30m
+    owner: Tech Lead

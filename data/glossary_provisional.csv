@@ -1,0 +1,9 @@
+term_code,en,vi,definition_en,definition_vi,unit,example,source
+KPI,Key Performance Indicator,Chỉ số đo hiệu suất,Metric used to evaluate success of an organization,Metric dùng để đánh giá hiệu suất tổ chức,Various,K0 = Data Quality Score,PROVISIONAL
+EVT,Event,Sự kiện,A canonical event record with event_code format EVT_[A-Z0-9_]+,Bản ghi sự kiện chuẩn với định dạng EVT_[A-Z0-9_]+,Event record,EVT_LEAD_CREATED,PROVISIONAL
+DSO,Days Sales Outstanding,Số ngày thu tiền bình quân,Average number of days to collect payment after sale,Số ngày trung bình thu tiền sau bán hàng,Days,DSO = 30 means payment collected in 30 days,PROVISIONAL
+PII,Personally Identifiable Information,Thông tin định danh cá nhân,Any information that can identify a specific individual,Thông tin có thể xác định cá nhân cụ thể,Data classification,Name phone ID card number address,PROVISIONAL
+Evidence,Evidence,Bằng chứng,Proof required to validate service delivery and trigger payment,Bằng chứng cần thiết để xác nhận dịch vụ và kích hoạt thanh toán,Document/record,Photo of installed equipment GPS coordinates,PROVISIONAL
+UST,UST (Urban Sales Team),Đại diện thương mại địa phương,Sales team handling urban area leads,Đội ngũ bán hàng xử lý lead khu vực đô thị,Team/Role,UST productivity = 3 touches/lead/day,PROVISIONAL
+L1,Level 1 Service,Biên sản phẩm lõi,Primary service tier representing basic package,Cấp dịch vụ chính đại diện gói cơ bản,Service tier,L1 = basic internet installation 2000000 VND,PROVISIONAL
+L2,Level 2 Service,Cross-sell theo vòng đờ House_ID,Secondary service tier representing premium package,Cấp dịch vụ thứ hai đại diện gói cao cấp,Service tier,L2 = premium package upsell 1500000 VND,PROVISIONAL

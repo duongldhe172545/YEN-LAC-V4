@@ -1,0 +1,162 @@
+template_code: A2_actor_master
+ssot_version: V5.0.2
+stage: PRE_INGEST
+description_vi: Danh bạ tác nhân chuẩn (Actor master) – trục join theo actor_id cho
+  vận hành/KPI. Không chứa PII.
+primary_key:
+- actor_id
+secondary_keys:
+- role_code
+- geo_unit_code
+- source_batch_id
+pii_policy_vi: Không lưu PII (tên thật/sđt/CCCD) trong template này. Trường pii_ref
+  chỉ là mã tham chiếu sang PII Vault sau consent.
+columns:
+- name: actor_id
+  class: required
+  required: true
+  type: string
+- name: role_code
+  class: required
+  required: true
+  type: string
+- name: capture_ts
+  class: required
+  required: true
+  type: string
+- name: source_batch_id
+  class: required
+  required: true
+  type: string
+- name: collector_actor_id
+  class: required
+  required: true
+  type: string
+- name: geo_unit_code
+  class: recommended
+  required: false
+  type: string
+- name: actor_status
+  class: recommended
+  required: false
+  type: string
+- name: start_date
+  class: recommended
+  required: false
+  type: string
+- name: end_date
+  class: recommended
+  required: false
+  type: string
+- name: actor_subtype
+  class: recommended
+  required: false
+  type: string
+- name: organization_id
+  class: recommended
+  required: false
+  type: string
+- name: payout_channel
+  class: recommended
+  required: false
+  type: string
+- name: wallet_id
+  class: recommended
+  required: false
+  type: string
+- name: training_status
+  class: recommended
+  required: false
+  type: string
+- name: pii_ref
+  class: recommended
+  required: false
+  type: string
+- name: provider_actor_ref
+  class: provider_raw
+  required: false
+  type: string
+- name: notes_raw
+  class: provider_raw
+  required: false
+  type: string
+- name: ops_raci_hint
+  class: ops_only
+  required: false
+  type: string
+- name: ops_cost_hint_vnd
+  class: ops_only
+  required: false
+  type: number
+enums:
+  role_code:
+  - COMMANDER
+  - DATA_LEAD
+  - FINANCE_CONTROLLER
+  - FIELD_RUNNER
+  - UST
+  - EPC_ADG
+  - ADG_PRO
+  - ANC
+  - CTV
+  - CITIZEN_OWNER
+  actor_status:
+  - ACTIVE
+  - INACTIVE
+  - SUSPENDED
+  actor_subtype:
+  - NONE
+  - KOL
+  - KOC
+  - GATEKEEPER
+  - GOV_LIAISON
+  - SHOP_OWNER
+  - OTHER
+  payout_channel:
+  - BANK_TRANSFER
+  - E_WALLET
+  - CASH
+  training_status:
+  - NOT_STARTED
+  - IN_PROGRESS
+  - COMPLETED
+  - EXEMPT
+ingest_policy:
+  canonical_ingest_columns:
+  - actor_id
+  - role_code
+  - capture_ts
+  - source_batch_id
+  - collector_actor_id
+  - geo_unit_code
+  - actor_status
+  - start_date
+  - end_date
+  - actor_subtype
+  - organization_id
+  - payout_channel
+  - wallet_id
+  - training_status
+  - pii_ref
+  - provider_actor_ref
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+  provider_raw_columns:
+  - provider_actor_ref
+  - notes_raw
+validation_rules_vi:
+- 'actor_id không rỗng và đúng format mã nội bộ (ví dụ: UST_0007, FR_0001).'
+- role_code phải thuộc whitelist vai trò LOCKED.
+- capture_ts đúng ISO 8601, không ở tương lai.
+- source_batch_id không rỗng để truy vết audit.
+- collector_actor_id phải tồn tại trong actor_master (hoặc là DATA_LEAD/COMMANDER
+  đã tạo trước).
+- Không được ghi PII (tên thật/sđt/CCCD) vào bất kỳ cột nào trong ACTOR_MASTER.
+- pii_ref chỉ là mã tham chiếu sang PII Vault; không phải số điện thoại/CCCD.
+- Nếu payout_channel có giá trị thì wallet_id nên có (để chi trả).
+- Nếu role_code thuộc nhóm thực địa (FIELD_RUNNER/UST/EPC_ADG/ADG_PRO/ANC/CTV) thì
+  geo_unit_code nên có.
+- 'Trùng actor_id trong cùng batch: không overwrite; xử lý bằng quarantine/correction
+  event.'

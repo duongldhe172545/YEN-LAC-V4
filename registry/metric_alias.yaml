@@ -1,0 +1,9 @@
+spec:
+  name: metric_alias_map
+  version: v5.0.2
+  date: '2025-12-24'
+  notes_vi:
+  - 'Phương án 2: canonical metric cho evidence là evidence_pass_rate.'
+  - Các tên còn lại chỉ là alias để backward compatibility.
+aliases:
+  risk_evidence_pass_rate: evidence_pass_rate

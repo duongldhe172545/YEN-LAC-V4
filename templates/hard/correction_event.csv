@@ -1,0 +1,2 @@
+target_event_id,fact_family,new_payload_json,reason_code,corrected_by,corrected_ts,idempotency_key
+EVTID_0002,roof_geometry,"{""roof_area_m2"":100}",DATA_ENTRY_ERROR,FIELD_RUNNER_01,2025-12-24T20:00:00,EVTID_0002|roof_geometry|20251224T200000

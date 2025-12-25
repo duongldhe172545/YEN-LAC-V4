@@ -1,0 +1,34 @@
+template_code: TMP_GOV_ENGAGEMENT_LOG
+ssot_version: V5.0.2
+type: soft
+stage: PRE/POST-INGEST
+file_source_in_ssot: templates/soft/gov_engagement_log.csv
+keys:
+- meeting_id
+- gov_contact_id
+purpose_vi: Nhật ký làm việc với chính quyền (append-only). Thêm điểm số 1–5 + reason_code
+  để máy tổng hợp.
+examples: outcome=OK
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - meeting_id
+  - gov_contact_id
+  - meeting_ts
+  - topic
+  - outcome
+  - meeting_outcome_score
+  - outcome_reason_code
+  - commitment_next_step
+  - evidence_uri
+  - held_by
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

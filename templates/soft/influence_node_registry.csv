@@ -1,0 +1,2 @@
+influence_node_id,actor_id,node_type,geo_unit_code,coverage_scope,channel,sentiment,reach_proxy,pii_ref,notes_raw
+INF_001,,KOL,YL_XA01,Thon A,ZALO_GROUP,POS,0.7,(PII_VAULT_REF),Village respected business owner

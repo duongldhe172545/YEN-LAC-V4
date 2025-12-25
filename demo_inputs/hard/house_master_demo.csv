@@ -1,0 +1,5 @@
+house_id,geo_unit_code,address_text,lat,lng,roof_type,roof_area_m2,built_year,source_batch_id
+YLX01_H0001,YL_XA01,"Thôn A, Xã Yên Lạc",21.1201,105.5601,TON,100,2012,DEMO_BATCH_001
+YLX01_H0002,YL_XA01,"Thôn B, Xã Yên Lạc",21.1202,105.5602,BETONG,80,2016,DEMO_BATCH_001
+YLX01_H0003,YL_XA01,"Thôn C, Xã Yên Lạc",21.1203,105.5603,TON,120,2008,DEMO_BATCH_001
+,YL_XA01,(thiếu house_id),21.1,105.5,TON,50,2010,DEMO_BATCH_001

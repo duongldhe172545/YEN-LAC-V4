@@ -1,0 +1,2 @@
+from_id,from_entity_type,to_id,to_entity_type,edge_strength,evidence_ref,notes_raw
+CL_01,HOUSE_CLUSTER,INF_001,INFLUENCE_NODE,0.8,Interview,

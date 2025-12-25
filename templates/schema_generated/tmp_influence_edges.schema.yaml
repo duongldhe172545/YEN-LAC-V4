@@ -1,0 +1,30 @@
+template_code: TMP_INFLUENCE_EDGES
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/influence_edges.csv
+keys:
+- from_id
+- to_id
+purpose_vi: Liên kết network (graph) giữa cụm nhà ↔ node ảnh hưởng. Bắt buộc khai
+  báo entity_type để máy dựng graph an toàn.
+examples: edge_strength=0.8
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - from_id
+  - from_entity_type
+  - to_id
+  - to_entity_type
+  - edge_strength
+  - evidence_ref
+  - notes_raw
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'

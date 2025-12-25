@@ -1,0 +1,30 @@
+template_code: TMP_MESSAGING_REGISTRY
+ssot_version: V5.0.2
+type: soft
+stage: PRE-INGEST
+file_source_in_ssot: templates/soft/messaging_registry.csv
+keys:
+- message_id
+- audience_type
+purpose_vi: Kho thông điệp chuẩn (anti-rumor) + talking points.
+examples: audience_type=CITIZEN
+pii_policy_vi: Không lưu PII trong template mềm khi chưa consent. Ghi chú không chứa
+  SĐT/CCCD/tên thật.
+ingest_policy:
+  canonical_ingest_columns:
+  - message_id
+  - audience_type
+  - channel
+  - message_text_vi
+  - do_not_say
+  - version
+  - approved_by
+  - approved_ts
+  drop_columns:
+  - ops_raci_hint
+  - ops_cost_hint_vnd
+validation_rules_vi:
+- Các cột trong keys là bắt buộc (không để trống).
+- Ngày phải theo YYYY-MM-DD; thời điểm theo ISO 8601 nếu có.
+- Không ghi PII vào notes_raw/ghi chú.
+- 'append-only: nếu sửa thì ghi dòng mới, không sửa dòng cũ.'
